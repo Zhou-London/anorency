@@ -1,0 +1,10 @@
+
+# Cache
+.cache
+
+# Build File
+build
+
+# Configuration File
+.clang
+.clang-format
