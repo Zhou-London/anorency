@@ -1,25 +1,16 @@
-
-
-#include <chrono>
-#include <iostream>
-#include <thread>
-
 #include "AnoEnvironment.h"
-#include "AnoInterface.h"
 #include "Flags.h"
+#include <iostream>
 
 int main() {
+
   AnoEnvironment env;
 
-  auto ano_thread = env.introduce<NewThread>([&](AnoInterface& interface) {
-    auto id = interface.get_this_id();
-    std::cout << "My id is: " << (int)id << std::endl;
-    std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+  auto id = env.introduce([](Flag::NewThread) { std::cout << "Hello 1\n"; });
 
-    return NewThread();
-  });
+  auto id2 = env.introduce([](Flag::NewThread) { std::cout << "Hello 2\n"; });
 
-  //env.join(ano_thread->id());
+  auto id3 = env.introduce([](Flag::NewThread) { std::cout << "Hello 3\n"; });
 
   return 0;
 }
