@@ -10,8 +10,10 @@ add_executable(anorency src/main.cpp)
 target_include_directories(anorency PRIVATE
     src
     src/AnoEnvironment
+    src/AnoAgent
 )
 
 target_sources(anorency PRIVATE
     src/AnoEnvironment/AnoEnvironment.cpp
+    src/AnoAgent/AnoAgent.cpp
 )
