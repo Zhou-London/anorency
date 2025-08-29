@@ -1,14 +1,13 @@
 #pragma once
 
-#include "AnoAgent.h"
-#include "Flags.h"
 #include <functional>
 
+#include "AnoAgent.h"
 #include "AnoType.h"
+#include "Flags.h"
 
 class AnoEnvironment {
-
-public:
+ public:
   AnoEnvironment();
   ~AnoEnvironment();
 
@@ -18,6 +17,6 @@ public:
 
   AnoAgent& operator[](AgentID id);
 
-private:
+ private:
   AgentsMap agents_;
 };

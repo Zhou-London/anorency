@@ -1,12 +1,12 @@
-#include "AnoEnvironment.h"
-#include "AnoType.h"
-#include "Flags.h"
 #include <chrono>
 #include <iostream>
 #include <thread>
 
-int main() {
+#include "AnoEnvironment.h"
+#include "AnoType.h"
+#include "Flags.h"
 
+int main() {
   AnoEnvironment env;
 
   auto t1 = env.introduce([&](Flag::NewThread) {

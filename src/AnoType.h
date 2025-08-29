@@ -1,10 +1,12 @@
 #pragma once
 
-#include "AnoAgent/AnoAgent.h"
-#include "Flags.h"
 #include <cstdint>
 #include <functional>
 #include <unordered_map>
+
+#include "AnoAgent/AnoAgent.h"
+#include "Flags.h"
+
 
 using AgentsMap = std::unordered_map<uint32_t, AnoAgent>;
 
