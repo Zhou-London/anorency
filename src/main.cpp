@@ -1,16 +1,23 @@
 #include "AnoEnvironment.h"
+#include "AnoType.h"
 #include "Flags.h"
+#include <chrono>
 #include <iostream>
+#include <thread>
 
 int main() {
 
   AnoEnvironment env;
 
-  auto id = env.introduce([](Flag::NewThread) { std::cout << "Hello 1\n"; });
+  auto t1 = env.introduce([&](Flag::NewThread) {
+    std::cout << "Hello\n";
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  });
 
-  auto id2 = env.introduce([](Flag::NewThread) { std::cout << "Hello 2\n"; });
-
-  auto id3 = env.introduce([](Flag::NewThread) { std::cout << "Hello 3\n"; });
+  env[t1].register_task([&](Flag::NewThread) {
+    std::cout << "World\n";
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  });
 
   return 0;
 }
