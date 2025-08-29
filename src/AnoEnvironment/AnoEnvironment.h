@@ -1,5 +1,6 @@
 #pragma once
 
+#include "AnoAgent.h"
 #include "Flags.h"
 #include <functional>
 
@@ -11,12 +12,12 @@ public:
   AnoEnvironment();
   ~AnoEnvironment();
 
-  ThreadID introduce(std::function<void(Flag::NewThread)>);
+  AgentID introduce(TaskNewThread);
 
-  ThreadID introduce(std::function<void(Flag::ThreadPool)>);
+  AgentID introduce(std::function<void(Flag::ThreadPool)>);
 
-  void join_all_threads();
+  AnoAgent& operator[](AgentID id);
 
 private:
-  ThreadsMap threads_;
+  AgentsMap agents_;
 };

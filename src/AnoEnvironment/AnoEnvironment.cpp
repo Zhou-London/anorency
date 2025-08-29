@@ -2,31 +2,27 @@
 #include "AnoType.h"
 #include "Flags.h"
 #include <functional>
-#include <thread>
 
-AnoEnvironment::AnoEnvironment() : threads_() {}
+AnoEnvironment::AnoEnvironment() : agents_() {}
 
-AnoEnvironment::~AnoEnvironment() { join_all_threads(); }
+AnoEnvironment::~AnoEnvironment() {
 
-ThreadID AnoEnvironment::introduce(std::function<void(Flag::NewThread)> func) {
+  // * RAII Destructs agents_map
+  // * RAII Desutrcts each agent
+}
 
-  const auto this_id = (ThreadID)threads_.size();
-  auto j = std::thread(func, Flag::NewThread());
-  threads_.emplace(this_id, std::move(j));
+AgentID AnoEnvironment::introduce(TaskNewThread func) {
+
+  const auto this_id = (AgentID)agents_.size();
+
+  agents_[this_id].register_task(func);
 
   return this_id;
 }
 
-ThreadID AnoEnvironment::introduce(std::function<void(Flag::ThreadPool)> func) {
+AgentID AnoEnvironment::introduce(std::function<void(Flag::ThreadPool)> func) {
   // TODO
   return 0;
 }
 
-void AnoEnvironment::join_all_threads() {
-
-  for (auto it = threads_.begin(); it != threads_.end(); ++it) {
-    if (it->second.joinable()) {
-      it->second.join();
-    }
-  }
-}
+AnoAgent &AnoEnvironment::operator[](AgentID id) { return agents_.at(id); }
