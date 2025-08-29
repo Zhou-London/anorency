@@ -1,9 +1,13 @@
 #pragma once
 
+#include "AnoAgent/AnoAgent.h"
+#include "Flags.h"
 #include <cstdint>
-#include <thread>
+#include <functional>
 #include <unordered_map>
 
-using ThreadsMap = std::unordered_map<uint32_t, std::thread>;
+using AgentsMap = std::unordered_map<uint32_t, AnoAgent>;
 
-using ThreadID = uint32_t;
+using AgentID = uint32_t;
+
+using TaskNewThread = std::function<void(Flag::NewThread)>;
