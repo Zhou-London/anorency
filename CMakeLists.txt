@@ -11,6 +11,7 @@ target_include_directories(anorency PRIVATE
     src
     src/interfaces
     src/AnoTasks
+    src/AnoExceptions
 )
 
 target_sources(anorency PRIVATE
