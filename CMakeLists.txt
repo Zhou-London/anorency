@@ -5,15 +5,16 @@ project(anorency)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(anorency src/main.cpp)
+add_executable(anorency src/test.cpp)
 
 target_include_directories(anorency PRIVATE
     src
-    src/AnoEnvironment
-    src/AnoAgent
+    src/interfaces
+    src/AnoTasks
 )
 
 target_sources(anorency PRIVATE
-    src/AnoEnvironment/AnoEnvironment.cpp
-    src/AnoAgent/AnoAgent.cpp
+    src/AnoInterface.cpp
+    src/AnoEnvironment.cpp
+    src/AnoTasks/AnoTaskDefault.cpp
 )
