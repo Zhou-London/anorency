@@ -1,7 +1,6 @@
 
 #include "AnoTaskDefault.h"
 
-#include <cstdint>
 #include <functional>
 #include <mutex>
 
@@ -14,28 +13,22 @@ AnoTaskDefault::AnoTaskDefault()
 
 AnoTaskDefault::~AnoTaskDefault() {}
 
-uint32_t AnoTaskDefault::load(const std::function<void(void)>& task) {
-  if (!stand_by_) return 1;
+void AnoTaskDefault::load(const std::function<void(void)>& task) {
 
   task_queue_.push(task);
   cv.notify_one();
-  return 0;
 }
 
-uint32_t AnoTaskDefault::load(std::function<void(void)>&& task) {
-  if (!stand_by_) return 1;
+void AnoTaskDefault::load(std::function<void(void)>&& task) {
 
   task_queue_.emplace(std::move(task));
   cv.notify_one();
-  return 0;
 }
 
-uint32_t AnoTaskDefault::join() {
+void AnoTaskDefault::join() {
   stand_by_ = false;
   cv.notify_one();
   thread_.join();
-
-  return 0;
 }
 
 void AnoTaskDefault::thread_loop() {

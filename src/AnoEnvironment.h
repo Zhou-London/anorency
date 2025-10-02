@@ -1,7 +1,5 @@
 #pragma once
 
-#include <cstdint>
-
 #include "AnoEnvironmentInterface.h"
 
 namespace Anorency {
@@ -10,7 +8,7 @@ class AnoEnvironment : public AnoEnvironmentInterface {
   AnoEnvironment();
   ~AnoEnvironment();
 
-  uint32_t introduce_task() override;
-  uint32_t join_all_tasks() override;
+  void introduce_task() override;
+  void join_all_tasks() override;
 };
 }  // namespace Anorency

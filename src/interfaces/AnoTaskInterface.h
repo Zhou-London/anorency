@@ -6,9 +6,9 @@
 namespace Anorency {
 class AnoTaskInterface {
  public:
-  virtual uint32_t load(const std::function<void(void)>& task) = 0;
-  virtual uint32_t load(std::function<void(void)>&& task) = 0;
+  virtual void load(const std::function<void(void)>& task) = 0;
+  virtual void load(std::function<void(void)>&& task) = 0;
 
-  virtual uint32_t join() = 0;
+  virtual void join() = 0;
 };
 }  // namespace Anorency

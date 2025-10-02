@@ -1,7 +1,6 @@
 #pragma once
 
 #include <condition_variable>
-#include <cstdint>
 #include <functional>
 #include <queue>
 #include <thread>
@@ -15,9 +14,9 @@ class AnoTaskDefault : public AnoTaskInterface {
   AnoTaskDefault();
   ~AnoTaskDefault();
 
-  uint32_t load(const std::function<void(void)>& task) override;
-  uint32_t load(std::function<void(void)>&& task) override;
-  uint32_t join() override;
+  void load(const std::function<void(void)>& task) override;
+  void load(std::function<void(void)>&& task) override;
+  void join() override;
 
  private:
   std::thread thread_;
