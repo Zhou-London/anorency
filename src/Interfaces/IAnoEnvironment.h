@@ -2,7 +2,7 @@
 
 namespace Anorency {
 
-class AnoEnvironmentInterface {
+class IAnoEnvironment {
  public:
   virtual void introduce_task() = 0;
   virtual void join_all_tasks() = 0;

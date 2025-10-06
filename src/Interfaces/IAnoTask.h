@@ -3,7 +3,7 @@
 #include <functional>
 
 namespace Anorency {
-class AnoTaskInterface {
+class IAnoTask {
  public:
   virtual void load(const std::function<void(void)>& task) = 0;
   virtual void load(std::function<void(void)>&& task) = 0;

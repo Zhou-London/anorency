@@ -1,15 +1,14 @@
 #pragma once
 
+#include "Interfaces/IAnoTask.h"
 #include <condition_variable>
 #include <functional>
 #include <queue>
 #include <thread>
 
-#include "AnoTaskInterface.h"
-
 namespace Anorency {
 
-class AnoTaskDefault : public AnoTaskInterface {
+class AnoTaskDefault : public IAnoTask {
  public:
   AnoTaskDefault();
   ~AnoTaskDefault();

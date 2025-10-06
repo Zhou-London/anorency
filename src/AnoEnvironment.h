@@ -1,9 +1,9 @@
 #pragma once
 
-#include "AnoEnvironmentInterface.h"
+#include "IAnoEnvironment.h"
 
 namespace Anorency {
-class AnoEnvironment : public AnoEnvironmentInterface {
+class AnoEnvironment : public IAnoEnvironment {
  public:
   AnoEnvironment();
   ~AnoEnvironment();
