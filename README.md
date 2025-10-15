@@ -7,3 +7,4 @@ A Concurrency library for C++.
 1.  Life scope of a Line
 2.  Dispatcher
 3.  Event-Driven design
+4.  Lines management: delete, hash map...
