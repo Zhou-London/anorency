@@ -3,6 +3,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <typeindex>
 #include <vector>
 
@@ -17,8 +18,21 @@ class Aggregator {
   ~Aggregator() = default;
 
   template <typename T>
-  void add(Line<T>* p) {
-    storage_.emplace_back(std::make_unique<Model<T>>(p));
+  std::size_t add(Line<T>* p) {
+    {
+      std::unique_lock<std::mutex> m;
+      storage_.emplace_back(std::make_unique<Model<T>>(p));
+      return storage_.size() - 1;
+    }
+  }
+
+  template <typename T>
+  std::size_t add() {
+    {
+      std::unique_lock<std::mutex> m;
+      storage_.emplace_back(std::make_unique<Model<T>>(new Line<T>()));
+      return storage_.size() - 1;
+    }
   }
 
   template <typename T>
@@ -58,6 +72,7 @@ class Aggregator {
     std::type_index type() const override { return typeid(Line<T>); }
   };
 
+  std::mutex mutex_;
   std::vector<std::unique_ptr<Concept>> storage_;
 };
 

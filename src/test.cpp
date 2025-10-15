@@ -34,19 +34,24 @@ inline void TEST_CASE_AGGREGATOR() {
   std::cout << "\nStart Test: Aggregator.\n";
 
   Anorency::Aggregator aggr;
-  Anorency::Line<int> il;
-  il.push(1);
-  Anorency::Line<std::string> sl;
-  sl.push("Hello");
+  auto it = aggr.add<int>();
 
-  aggr.add(&il);
-  aggr.add(&sl);
-
-  auto v1 = aggr.get<int>(0);
-  auto v2 = aggr.get<std::string>(1);
-
-  std::cout << v1->peek() << "\n";
-  std::cout << v2->peek() << "\n";
+  auto line = aggr.get<int>(it);
+  line->push(10);
+  line->push(20);
+  line->push(30);
+  line->push(40);
+  line->push(50);
+  std::cout << line->peek() << "\n";
+  line->pop();
+  std::cout << line->peek() << "\n";
+  line->pop();
+  std::cout << line->peek() << "\n";
+  line->pop();
+  std::cout << line->peek() << "\n";
+  line->pop();
+  std::cout << line->peek() << "\n";
+  line->pop();
 }
 
 int main() {
