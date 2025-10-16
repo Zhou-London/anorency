@@ -16,4 +16,6 @@ target_include_directories(anorency PRIVATE
 
 target_sources(anorency PRIVATE
     src/AnoInterface.cpp
+    src/Environment/Environment.cpp
+    src/Lines/Aggregator.cpp
 )
