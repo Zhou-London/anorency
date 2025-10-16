@@ -13,9 +13,9 @@ namespace Anorency {
 
 class Aggregator {
  public:
-  Aggregator() { storage_.reserve(128); }
-  Aggregator(uint32_t size) { storage_.reserve(size); }
-  ~Aggregator() = default;
+  Aggregator();
+  Aggregator(uint32_t size);
+  ~Aggregator();
 
   template <typename T>
   std::size_t add(Line<T>* p) {
