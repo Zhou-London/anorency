@@ -8,7 +8,7 @@
 #include "AnoException.h"
 #include "AnoInterface.h"
 #include "Environment.h"
-#include "Line.h"
+#include "Stream.h"
 #include "Types.h"
 
 #define TEST_PASS "PASS"
@@ -57,18 +57,18 @@ inline void TEST_CASE_AGGREGATOR() {
   Anorency::Aggregator aggr;
   auto it = aggr.add<int>();
 
-  auto line = aggr.get<int>(it);
+  auto stream = aggr.get<int>(it);
   auto vec = std::vector<int>{1, 2, 3, 4, 5};
 
-  for (const auto i : vec) line->push(i);
+  for (const auto i : vec) stream->push(i);
 
   auto res = std::vector<int>(vec.size(), 0);
   for (size_t i = 0; i != vec.size(); ++i) {
-    res[i] = line->peek();
-    line->pop();
+    res[i] = stream->peek();
+    stream->pop();
   }
 
-  if (res == vec && line->size() == 0) {
+  if (res == vec && stream->size() == 0) {
     std::cout << TEST_PASS << "\n";
     ++PASS_C;
     return;
@@ -81,19 +81,19 @@ inline void TEST_CASE_AGGREGATOR_INTERFACE() {
   std::cout << "\nStart Test: Aggregator Interface Integration.\n";
 
   Anorency::Environment env;
-  Anorency::line_id_t id;
+  Anorency::stream_id_t id;
   int v = 10;
   int res = 0;
 
   env.introduce([&](Anorency::AnoInterface&& iface) {
-    id = iface.make_line<int>();
-    auto line = iface.get_line<int>(id);
-    line->push(v);
+    id = iface.make_stream<int>();
+    auto stream = iface.get_stream<int>(id);
+    stream->push(v);
   });
 
   env.introduce([&](Anorency::AnoInterface&& iface) {
-    auto line = iface.get_line<int>(id);
-    res = line->peek();
+    auto stream = iface.get_stream<int>(id);
+    res = stream->peek();
   });
 
   if (res == v) {

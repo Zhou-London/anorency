@@ -15,17 +15,17 @@ class AnoInterface {
   std::string get_str();
 
   template <typename T>
-  line_id_t make_line() {
+  stream_id_t make_stream() {
     return aggr.add<T>();
   }
 
   template <typename T>
-  line_id_t make_line(Line<T>* p) {
+  stream_id_t make_stream(Stream<T>* p) {
     return aggr.add<T>(p);
   }
 
   template <typename T>
-  Line<T>* get_line(size_t index) {
+  Stream<T>* get_stream(size_t index) {
     return aggr.get<T>(index);
   }
 

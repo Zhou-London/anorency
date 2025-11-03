@@ -8,10 +8,10 @@
 namespace Anorency {
 
 template <typename T>
-class Line {
+class Stream {
  public:
-  Line() = default;
-  ~Line() = default;
+  Stream() = default;
+  ~Stream() = default;
 
   void push(const T& var) { queue_.push(var); }
 

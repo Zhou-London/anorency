@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "AnoException.h"
-#include "Line.h"
+#include "Stream.h"
 namespace Anorency {
 
 class Aggregator {
@@ -18,7 +18,7 @@ class Aggregator {
   ~Aggregator();
 
   template <typename T>
-  std::size_t add(Line<T>* p) {
+  std::size_t add(Stream<T>* p) {
     {
       std::unique_lock<std::mutex> m;
       storage_.emplace_back(std::make_unique<Model<T>>(p));
@@ -30,20 +30,20 @@ class Aggregator {
   std::size_t add() {
     {
       std::unique_lock<std::mutex> m;
-      storage_.emplace_back(std::make_unique<Model<T>>(new Line<T>()));
+      storage_.emplace_back(std::make_unique<Model<T>>(new Stream<T>()));
       return storage_.size() - 1;
     }
   }
 
   template <typename T>
-  Line<T>* get(std::size_t index) const {
+  Stream<T>* get(std::size_t index) const {
     if (index >= storage_.size())
       throw AnoException("Aggregator: Index out of range.");
 
     const auto& item = storage_[index];
 
-    if (item->type() == typeid(Line<T>))
-      return static_cast<Line<T>*>(item->raw_ptr());
+    if (item->type() == typeid(Stream<T>))
+      return static_cast<Stream<T>*>(item->raw_ptr());
     else if(item == nullptr)
       throw AnoException("Aggregator: Pointer destructed.");
     else
@@ -68,10 +68,10 @@ class Aggregator {
 
   template <typename T>
   struct Model : Concept {
-    Line<T>* ptr;
-    Model(Line<T>* ptr) : ptr(ptr) {}
+    Stream<T>* ptr;
+    Model(Stream<T>* ptr) : ptr(ptr) {}
     void* raw_ptr() override { return ptr; }
-    std::type_index type() const override { return typeid(Line<T>); }
+    std::type_index type() const override { return typeid(Stream<T>); }
   };
 
   std::mutex mutex_;
