@@ -51,6 +51,25 @@ inline void TEST_CASE_ENVIRONMENT_INTRODUCE() {
   });
 }
 
+inline void TEST_CASE_STREAM() {
+  std::cout << "\nStart Test: Stream.\n";
+  auto s = Anorency::Stream<int>();
+  auto vec = std::vector<int>();
+  vec.reserve(3);
+  s.push(1);
+  s.push(2);
+  s.push(3);
+  for (auto i : s) vec.push_back(i);
+
+  if (vec == std::vector<int>{1, 2, 3} && s.size() == 3) {
+    std::cout << TEST_PASS << "\n";
+    ++PASS_C;
+    return;
+  }
+  std::cout << TEST_FAIL << "\n";
+  ++FAIL_C;
+}
+
 inline void TEST_CASE_AGGREGATOR() {
   std::cout << "\nStart Test: Aggregator.\n";
 
@@ -108,15 +127,16 @@ inline void TEST_CASE_AGGREGATOR_INTERFACE() {
 int main() {
   TEST_CASE_ENVIRONMENT_INTRODUCE();
   TEST_CASE_EXCEPTION();
+  TEST_CASE_STREAM();
   TEST_CASE_AGGREGATOR();
   TEST_CASE_AGGREGATOR_INTERFACE();
 
   auto pass_rate = (double)PASS_C / (PASS_C + FAIL_C) * 100;
-  std::cout << "\n" // 
-  << PASS_C + FAIL_C << " test cases executed.\n"
-  << PASS_C << " passed.\n"
-  << FAIL_C << " failed.\n"
-  << "Pass rate: " << pass_rate << "%\n";
+  std::cout << "\n"  //
+            << PASS_C + FAIL_C << " test cases executed.\n"
+            << PASS_C << " passed.\n"
+            << FAIL_C << " failed.\n"
+            << "Pass rate: " << pass_rate << "%\n";
 
   return 0;
 }

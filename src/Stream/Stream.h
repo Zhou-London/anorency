@@ -2,7 +2,7 @@
 
 #include <algorithm>
 #include <exception>
-#include <queue>
+#include <list>
 
 #include "AnoException.h"
 namespace Anorency {
@@ -13,13 +13,13 @@ class Stream {
   Stream() = default;
   ~Stream() = default;
 
-  void push(const T& var) { queue_.push(var); }
+  void push(const T& var) { list_.push_back(var); }
 
-  void push(T&& var) { queue_.emplace(std::move(var)); }
+  void push(T&& var) { list_.emplace_back(std::move(var)); }
 
-  T peek() {
+  T peek() const {
     try {
-      return queue_.front();
+      return list_.front();
     } catch (std::exception& e) {
       throw AnoException(e.what());
     }
@@ -27,16 +27,20 @@ class Stream {
 
   void pop() {
     try {
-      queue_.pop();
+      list_.pop_front();
     } catch (std::exception& e) {
       throw AnoException(e.what());
     }
   }
 
-  size_t size() const noexcept { return queue_.size(); }
+  size_t size() const noexcept { return list_.size(); }
+  bool empty() const noexcept { return list_.empty(); }
+
+  auto begin() const noexcept { return list_.begin(); }
+  auto end() const noexcept { return list_.end(); }
 
  private:
-  std::queue<T> queue_;
+  std::list<T> list_;
 };
 
 }  // namespace Anorency
