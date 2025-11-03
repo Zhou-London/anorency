@@ -11,11 +11,11 @@ target_include_directories(anorency PRIVATE
     src
     src/Environment
     src/Exceptions
-    src/Lines
+    src/Stream
 )
 
 target_sources(anorency PRIVATE
     src/AnoInterface.cpp
     src/Environment/Environment.cpp
-    src/Lines/Aggregator.cpp
+    src/Stream/Aggregator.cpp
 )
