@@ -13,7 +13,7 @@ class Line {
   Line() = default;
   ~Line() = default;
 
-  void push(T& var) { queue_.push(var); }
+  void push(const T& var) { queue_.push(var); }
 
   void push(T&& var) { queue_.emplace(std::move(var)); }
 
@@ -32,6 +32,8 @@ class Line {
       throw AnoException(e.what());
     }
   }
+
+  size_t size() const noexcept { return queue_.size(); }
 
  private:
   std::queue<T> queue_;

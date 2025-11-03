@@ -44,6 +44,8 @@ class Aggregator {
 
     if (item->type() == typeid(Line<T>))
       return static_cast<Line<T>*>(item->raw_ptr());
+    else if(item == nullptr)
+      throw AnoException("Aggregator: Pointer destructed.");
     else
       throw AnoException("Aggregator: Type mismatch.");
   }
