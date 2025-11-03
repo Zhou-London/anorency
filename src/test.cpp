@@ -1,6 +1,8 @@
+#include <cstdint>
 #include <exception>
 #include <iostream>
 #include <string>
+#include <vector>
 
 #include "Aggregator.h"
 #include "AnoException.h"
@@ -9,13 +11,26 @@
 #include "Line.h"
 #include "Types.h"
 
+#define TEST_PASS "PASS"
+#define TEST_FAIL "FAIL"
+
+uint16_t PASS_C = 0;
+uint16_t FAIL_C = 0;
+
 inline void TEST_CASE_EXCEPTION() {
   std::cout << "\nStart Test: Exception.\n";
 
   try {
     throw Anorency::AnoException("Unknown Error.");
+  } catch (Anorency::AnoException& e) {
+    std::cout << TEST_PASS << "\n";
+    ++PASS_C;
   } catch (std::exception& e) {
-    std::cout << e.what() << "\n";
+    std::cout << TEST_FAIL << "\n";
+    ++FAIL_C;
+  } catch (...) {
+    std::cout << TEST_FAIL << "\n";
+    ++FAIL_C;
   }
 }
 
@@ -24,11 +39,15 @@ inline void TEST_CASE_ENVIRONMENT_INTRODUCE() {
 
   Anorency::Environment env;
   env.introduce([&](Anorency::AnoInterface&& iface) {
-    iface.set_str("First set.");
-    std::cout << iface.get_str() << "\n";
+    iface.set_str("abc");
 
-    iface.set_str("Second set.");
-    std::cout << iface.get_str() << "\n";
+    if (iface.get_str() == "abc") {
+      std::cout << TEST_PASS << "\n";
+      ++PASS_C;
+      return;
+    }
+    std::cout << TEST_FAIL << "\n";
+    ++FAIL_C;
   });
 }
 
@@ -39,21 +58,23 @@ inline void TEST_CASE_AGGREGATOR() {
   auto it = aggr.add<int>();
 
   auto line = aggr.get<int>(it);
-  line->push(10);
-  line->push(20);
-  line->push(30);
-  line->push(40);
-  line->push(50);
-  std::cout << line->peek() << "\n";
-  line->pop();
-  std::cout << line->peek() << "\n";
-  line->pop();
-  std::cout << line->peek() << "\n";
-  line->pop();
-  std::cout << line->peek() << "\n";
-  line->pop();
-  std::cout << line->peek() << "\n";
-  line->pop();
+  auto vec = std::vector<int>{1, 2, 3, 4, 5};
+
+  for (const auto i : vec) line->push(i);
+
+  auto res = std::vector<int>(vec.size(), 0);
+  for (size_t i = 0; i != vec.size(); ++i) {
+    res[i] = line->peek();
+    line->pop();
+  }
+
+  if (res == vec && line->size() == 0) {
+    std::cout << TEST_PASS << "\n";
+    ++PASS_C;
+    return;
+  }
+  std::cout << TEST_FAIL << "\n";
+  ++FAIL_C;
 }
 
 inline void TEST_CASE_AGGREGATOR_INTERFACE() {
@@ -61,22 +82,27 @@ inline void TEST_CASE_AGGREGATOR_INTERFACE() {
 
   Anorency::Environment env;
   Anorency::line_id_t id;
-  env.introduce([&](Anorency::AnoInterface&& iface) {
-    auto this_id = iface.make_line<int>();
-    id = this_id;
-    auto line = iface.get_line<int>(id);
-    line->push(10);
+  int v = 10;
+  int res = 0;
 
-    std::cout << "First Task: Value Pushed.\n";
+  env.introduce([&](Anorency::AnoInterface&& iface) {
+    id = iface.make_line<int>();
+    auto line = iface.get_line<int>(id);
+    line->push(v);
   });
 
   env.introduce([&](Anorency::AnoInterface&& iface) {
     auto line = iface.get_line<int>(id);
-    std::cout << line->peek() << "\n";
-    line->pop();
-
-    std::cout << "Second Task: Value Read.\n";
+    res = line->peek();
   });
+
+  if (res == v) {
+    std::cout << TEST_PASS << "\n";
+    ++PASS_C;
+    return;
+  }
+  std::cout << TEST_FAIL << "\n";
+  ++FAIL_C;
 }
 
 int main() {
@@ -84,5 +110,13 @@ int main() {
   TEST_CASE_EXCEPTION();
   TEST_CASE_AGGREGATOR();
   TEST_CASE_AGGREGATOR_INTERFACE();
+
+  auto pass_rate = (double)PASS_C / (PASS_C + FAIL_C) * 100;
+  std::cout << "\n" // 
+  << PASS_C + FAIL_C << " test cases executed.\n"
+  << PASS_C << " passed.\n"
+  << FAIL_C << " failed.\n"
+  << "Pass rate: " << pass_rate << "%\n";
+
   return 0;
 }
