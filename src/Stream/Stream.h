@@ -13,6 +13,7 @@ class Stream {
   Stream() = default;
   ~Stream() = default;
 
+  // ! Deprecated function
   void push(const T& var) { list_.push_back(var); }
 
   void push(T&& var) { list_.emplace_back(std::move(var)); }
@@ -28,6 +29,21 @@ class Stream {
   void pop() {
     try {
       list_.pop_front();
+    } catch (std::exception& e) {
+      throw AnoException(e.what());
+    }
+  }
+  // !
+
+  void write(const T& var) { list_.push_back(var); }
+
+  void write(T&& var) { list_.emplace_back(std::move(var)); }
+
+  T read() {
+    try {
+      auto it = list_.front();
+      list_.pop_front();
+      return it;
     } catch (std::exception& e) {
       throw AnoException(e.what());
     }

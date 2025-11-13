@@ -13,10 +13,16 @@ class Environment {
   Environment(std::size_t aggr_size);
   ~Environment() = default;
 
-  template <typename F>
-    requires std::invocable<F, AnoInterface&&>
+  template <typename S, typename F>
+    requires std::invocable<F, AnoInterface<S>&&>
   void introduce(F&& f) {
-    f(std::move(AnoInterface(str, aggr)));
+    using uniq_stream_t = S;
+
+    auto wrap = [&]() {
+      f(std::move(AnoInterface<S>(str, aggr, aggr.add<uniq_stream_t>())));
+    };
+
+    wrap();
   }
 
  private:

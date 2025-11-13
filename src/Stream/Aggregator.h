@@ -9,6 +9,7 @@
 
 #include "AnoException.h"
 #include "Stream.h"
+#include "Types.h"
 namespace Anorency {
 
 class Aggregator {
@@ -18,7 +19,7 @@ class Aggregator {
   ~Aggregator();
 
   template <typename T>
-  std::size_t add(Stream<T>* p) {
+  stream_id_t add(Stream<T>* p) {
     {
       std::unique_lock<std::mutex> m;
       storage_.emplace_back(std::make_unique<Model<T>>(p));
@@ -27,7 +28,7 @@ class Aggregator {
   }
 
   template <typename T>
-  std::size_t add() {
+  stream_id_t add() {
     {
       std::unique_lock<std::mutex> m;
       storage_.emplace_back(std::make_unique<Model<T>>(new Stream<T>()));
@@ -44,20 +45,15 @@ class Aggregator {
 
     if (item->type() == typeid(Stream<T>))
       return static_cast<Stream<T>*>(item->raw_ptr());
-    else if(item == nullptr)
+    else if (item == nullptr)
       throw AnoException("Aggregator: Pointer destructed.");
     else
       throw AnoException("Aggregator: Type mismatch.");
   }
 
-  std::type_index type_at(std::size_t index) const {
-    if (index >= storage_.size())
-      throw AnoException("Aggregator: Index out of range.");
+  std::type_index type_at(std::size_t index) const;
 
-    return storage_[index]->type();
-  }
-
-  std::size_t size() const noexcept { return storage_.size(); }
+  std::size_t size() const noexcept;
 
  private:
   struct Concept {
