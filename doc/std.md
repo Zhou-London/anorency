@@ -33,6 +33,6 @@ For MSVC, the compiler is cl from Visual Studio 2022 Community.
 - C++ 23 **BUT** most of the features are from C++ 20.
 - **Enable** exception, unlike Google.
 - **Disable** template meta programming.
-- **No** seperation of implementation for template class/method.
+- **Non**-mandatory seperation of implementation for template class/method.
 - Upper-case comel for everything **except** type alias.
 - Snake for type alias.
