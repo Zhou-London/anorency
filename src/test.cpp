@@ -34,11 +34,12 @@ inline void TEST_CASE_EXCEPTION() {
   }
 }
 
+// ! Deprecated
 inline void TEST_CASE_ENVIRONMENT_INTRODUCE() {
   std::cout << "\nStart Test: Environment_Introduce.\n";
 
   Anorency::Environment env;
-  env.introduce([&](Anorency::AnoInterface&& iface) {
+  env.introduce<int>([&](auto&& iface) {
     iface.set_str("abc");
 
     if (iface.get_str() == "abc") {
@@ -70,6 +71,7 @@ inline void TEST_CASE_STREAM() {
   ++FAIL_C;
 }
 
+// ! Deprecated
 inline void TEST_CASE_AGGREGATOR() {
   std::cout << "\nStart Test: Aggregator.\n";
 
@@ -96,6 +98,7 @@ inline void TEST_CASE_AGGREGATOR() {
   ++FAIL_C;
 }
 
+// ! Deprecated
 inline void TEST_CASE_AGGREGATOR_INTERFACE() {
   std::cout << "\nStart Test: Aggregator Interface Integration.\n";
 
@@ -104,13 +107,13 @@ inline void TEST_CASE_AGGREGATOR_INTERFACE() {
   int v = 10;
   int res = 0;
 
-  env.introduce([&](Anorency::AnoInterface&& iface) {
+  env.introduce<int>([&](Anorency::AnoInterface<int>&& iface) {
     id = iface.make_stream<int>();
-    auto stream = iface.get_stream<int>(id);
+    auto stream = iface.template get_stream<int>(id);
     stream->push(v);
   });
 
-  env.introduce([&](Anorency::AnoInterface&& iface) {
+  env.introduce<int>([&](Anorency::AnoInterface<int>&& iface) {
     auto stream = iface.get_stream<int>(id);
     res = stream->peek();
   });
