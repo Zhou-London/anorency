@@ -52,6 +52,7 @@ inline void TEST_CASE_ENVIRONMENT_INTRODUCE() {
   });
 }
 
+// ! Deprecated
 inline void TEST_CASE_STREAM() {
   std::cout << "\nStart Test: Stream.\n";
   auto s = Anorency::Stream<int>();
@@ -127,12 +128,32 @@ inline void TEST_CASE_AGGREGATOR_INTERFACE() {
   ++FAIL_C;
 }
 
+inline void TEST_CASE_UNIQUE_STREAM() {
+  std::cout << "\nStart Test: Unique Stream.\n";
+  Anorency::Environment env;
+
+  auto uniq_1 = env.introduce<int>(
+      [&](Anorency::AnoInterface<int>&& iface) { iface.write_uniq_stream(1); });
+
+  env.introduce<int>([&](Anorency::AnoInterface<int>&& iface) {
+    auto val = iface.get_stream<int>(uniq_1)->read();
+
+    if (val == 1) {
+      std::cout << TEST_PASS << "\n";
+      ++PASS_C;
+      return;
+    }
+    std::cout << TEST_FAIL << "\n";
+    ++FAIL_C;
+  });
+}
 int main() {
   TEST_CASE_ENVIRONMENT_INTRODUCE();
   TEST_CASE_EXCEPTION();
   TEST_CASE_STREAM();
   TEST_CASE_AGGREGATOR();
   TEST_CASE_AGGREGATOR_INTERFACE();
+  TEST_CASE_UNIQUE_STREAM();
 
   auto pass_rate = (double)PASS_C / (PASS_C + FAIL_C) * 100;
   std::cout << "\n"  //

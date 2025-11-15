@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include <string>
 
 #include "Aggregator.h"
@@ -10,7 +11,9 @@ template <typename S>
 class AnoInterface {
  public:
   AnoInterface(std::string& str, Aggregator& aggr, stream_id_t uniq_stream_id)
-      : str(str), aggr(aggr), uniq_stream_id(uniq_stream_id) {}
+      : str(str), aggr(aggr), uniq_stream_id(uniq_stream_id) {
+        uniq_stream = aggr.get<S>(uniq_stream_id);
+      }
   ~AnoInterface() = default;
 
   void set_str(const std::string& new_str) { this->str = new_str; }
@@ -23,6 +26,8 @@ class AnoInterface {
   Stream<S>* get_uniq_stream() const noexcept { return this->uniq_stream; }
 
   S read_uniq_stream() { return this->uniq_stream->read(); }
+
+  void write_uniq_stream(S&& val) { this->uniq_stream->write(std::move(val)); }
 
   template <typename T>
   stream_id_t make_stream() {
