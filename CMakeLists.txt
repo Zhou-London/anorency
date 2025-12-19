@@ -17,4 +17,5 @@ target_include_directories(anorency PUBLIC
 
 enable_testing()
 
-add_subdirectory(tests)
+add_subdirectory(google_tests)
+add_subdirectory(google_benchmarks)

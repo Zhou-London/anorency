@@ -11,6 +11,16 @@
         "CMAKE_BUILD_TYPE": "Debug",
         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
       }
+    },
+    {
+      "name": "release",
+      "displayName": "Configure for benchmarks",
+      "generator": "Ninja",
+      "binaryDir": "build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
     }
   ],
 
@@ -18,6 +28,10 @@
     {
       "name": "test",
       "configurePreset": "test"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
     }
   ],
 
