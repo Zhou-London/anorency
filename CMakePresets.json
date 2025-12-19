@@ -1,0 +1,50 @@
+{
+  "version": 3,
+
+  "configurePresets": [
+    {
+      "name": "test",
+      "displayName": "Configure for tests",
+      "generator": "Ninja",
+      "binaryDir": "build/test",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Configure for benchmarks",
+      "generator": "Ninja",
+      "binaryDir": "build/release",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"
+      }
+    }
+  ],
+
+  "buildPresets": [
+    {
+      "name": "test",
+      "configurePreset": "test"
+    },
+    {
+      "name": "release",
+      "configurePreset": "release"
+    }
+  ],
+
+  "testPresets": [
+    {
+      "name": "test",
+      "configurePreset": "test",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    }
+  ]
+}

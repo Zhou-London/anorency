@@ -5,16 +5,17 @@ project(anorency)
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_executable(anorency src/test.cpp)
-
-target_include_directories(anorency PRIVATE
-    src
-    src/Environment
-    src/Exceptions
-    src/Stream
+add_library(anorency 
+    src/info/version.cpp
+    src/Streams/Stream.cpp
 )
 
-target_sources(anorency PRIVATE
-    src/Environment/Environment.cpp
-    src/Stream/Aggregator.cpp
+target_include_directories(anorency PUBLIC
+    include/info
+    include/Streams
 )
+
+enable_testing()
+
+add_subdirectory(google_tests)
+add_subdirectory(google_benchmarks)

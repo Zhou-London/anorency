@@ -1,10 +1,15 @@
 # Anorency
 
-A Concurrency library for C++.
+An Actor-based Concurrency library for C++, insipred by SObjectizer.
 
-## TODO
+## Preview
 
-1.  Life scope of a Stream
-2.  Dispatcher
-3.  Event-Driven design
-4.  Async construction/deletion of Stream
+N/A
+
+## Contribution
+
+N/A
+
+## License
+
+N/A
