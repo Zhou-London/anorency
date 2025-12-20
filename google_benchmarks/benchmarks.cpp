@@ -8,6 +8,8 @@
 #include "Stream.h"
 #include "os_util.h"
 
+using namespace Anorency;
+
 static void BM_Stream_FIFO(benchmark::State& state) {
   constexpr int N = 1 << 22;
   auto stream = Stream<int>();

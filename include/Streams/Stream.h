@@ -7,6 +7,7 @@
 #include <array>
 #include <cstdint>
 
+namespace Anorency {
 template <typename T, size_t Capacity = DEFAULT_STREAM_CAPACITY>
 class Stream {
  public:
@@ -14,7 +15,7 @@ class Stream {
   ~Stream() = default;
 
   template <typename U>
-      requires std::constructible_from<T, U&&>
+    requires std::constructible_from<T, U&&>
   bool try_write(U&& x);
 
   bool try_read(T& output);
@@ -27,5 +28,5 @@ class Stream {
 
   alignas(64) std::array<T, Capacity> buffer_;
 };
-
+}  // namespace Anorency
 #include "Stream.inl"

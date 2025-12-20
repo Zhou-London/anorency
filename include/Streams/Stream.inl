@@ -4,6 +4,8 @@
 #include <cstddef>
 
 #include "Stream.h"
+
+namespace Anorency {
 template <typename T, size_t Capacity>
 Stream<T, Capacity>::Stream() : head_(0), tail_(0){};
 
@@ -33,3 +35,4 @@ template <typename T, size_t Capacity>
 size_t Stream<T, Capacity>::size() const noexcept {
   return tail_ - head_;
 }
+}  // namespace Anorency

@@ -6,6 +6,8 @@
 #include "Stream.h"
 #include "version.h"
 
+using namespace Anorency;
+
 TEST(Info, info) { EXPECT_EQ(version(), "v0.1"); }
 
 TEST(Streams, StreamFIFOTest) {
@@ -39,3 +41,4 @@ TEST(Streams, StreamFIFOTest) {
   EXPECT_EQ(read_n, 1024);
   EXPECT_EQ(r, 1023);
 }
+
