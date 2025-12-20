@@ -4,22 +4,21 @@
 
 Stream::Stream() : head_(0), tail_(0) {};
 
-void Stream::write(int num) {
-  while (true) {
-    if (tail_ - head_ < STREAM_BUFFER_CAPACITY) {
-      buffer_[tail_ & (STREAM_BUFFER_CAPACITY - 1)] = num;
-      ++tail_;
-      return;
-    }
-  }
+bool Stream::try_write(int x) {
+  if (tail_ - head_ == STREAM_BUFFER_CAPACITY) return false;
+
+  buffer_[tail_ & (STREAM_BUFFER_CAPACITY - 1)] = x;
+  ++tail_;
+
+  return true;
 }
 
-int Stream::read() {
-  while (true) {
-    if (tail_ > head_) {
-      return buffer_[head_++ & (STREAM_BUFFER_CAPACITY - 1)];
-    }
-  }
+bool Stream::try_read(int& output) {
+  if (tail_ == head_) return false;
+
+  output = buffer_[head_++ & (STREAM_BUFFER_CAPACITY - 1)];
+
+  return true;
 }
 
 size_t Stream::size() const noexcept { return tail_ - head_; }
