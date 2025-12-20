@@ -7,12 +7,18 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(anorency 
     src/info/version.cpp
-    src/Streams/Stream.cpp
+
+    src/util/os_util.cpp
 )
 
 target_include_directories(anorency PUBLIC
     include/info
     include/Streams
+    include/util
+)
+
+target_link_libraries(anorency PUBLIC
+    pthread
 )
 
 enable_testing()
