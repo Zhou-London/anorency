@@ -1,26 +1,51 @@
 #include <benchmark/benchmark.h>
+#include <pthread/qos.h>
+#include <sys/qos.h>
 
-#include <ranges>
+#include <atomic>
 #include <thread>
 
 #include "Stream.h"
+#include "os_util.h"
 
 static void BM_Stream_FIFO(benchmark::State& state) {
+  constexpr int N = 1 << 22;
+  auto stream = Stream<int>();
+  std::atomic<bool> start{false};
+
+  int r = 0;
+
+  std::jthread writer([&]() {
+    pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+    while (!start.load(std::memory_order_acquire)) {
+    }
+
+    for (int i = 0; i < N; ++i)
+      while (!stream.try_write(i)) {
+        cpu_relax();
+      }
+  });
+
+  std::jthread reader([&]() {
+    pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+    while (!start.load(std::memory_order_acquire)) {
+    }
+
+    for (int i = 0; i < N; ++i)
+      while (!stream.try_read(r)) {
+        cpu_relax();
+      }
+  });
+
   for (auto _ : state) {
-    Stream stream;
+    start.store(false, std::memory_order_relaxed);
 
-    int N = 1 << 12;
-    int r = 0;
-    {
-      std::jthread write([&]() {
-        for (int i : std::ranges::views::iota(0, N))
-          while (!stream.try_write(i)) __asm__ volatile("yield");
-      });
+    benchmark::DoNotOptimize(r);
 
-      std::jthread read([&]() {
-        for (int i : std::ranges::views::iota(0, N))
-          while (!stream.try_read(r)) __asm__ volatile("yield");
-      });
+    start.store(true, std::memory_order_release);
+
+    while (stream.size() != 0) {
+      cpu_relax();
     }
   }
 }

@@ -9,7 +9,7 @@
 TEST(Info, info) { EXPECT_EQ(version(), "v0.1"); }
 
 TEST(Streams, StreamFIFOTest) {
-  Stream stream;
+  auto stream = Stream<int, 2048>();
 
   int total_n = 1024, written_n = 0, read_n = 0;
 
