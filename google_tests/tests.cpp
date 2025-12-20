@@ -13,28 +13,29 @@ TEST(Streams, StreamFIFOTest) {
 
   int total_n = 1024, written_n = 0, read_n = 0;
 
-  std::thread write([&]() {
-    for (int i = 0; i < total_n; ++i) {
-      stream.write(i);
-      ++written_n;
-    }
+  int r;
+  {
+    std::jthread write([&]() {
+      for (int i : std::ranges::views::iota(0, total_n)) {
+        while (!stream.try_write(i)) {
+        }
 
-    return;
-  });
+        ++written_n;
+      }
+    });
 
-  std::thread read([&]() {
-    while (read_n < total_n) {
-      stream.read();
-      ++read_n;
-    }
+    std::jthread read([&]() {
+      for (int i : std::ranges::views::iota(0, total_n)) {
+        while (!stream.try_read(r)) {
+        }
 
-    return;
-  });
-
-  write.join();
-  read.join();
+        ++read_n;
+      }
+    });
+  }
 
   EXPECT_EQ(written_n, read_n);
   EXPECT_EQ(written_n, 1024);
   EXPECT_EQ(read_n, 1024);
+  EXPECT_EQ(r, 1023);
 }

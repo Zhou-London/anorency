@@ -1,24 +1,25 @@
 #include <benchmark/benchmark.h>
 
-#include <algorithm>
-#include <iostream>
 #include <ranges>
 #include <thread>
-#include <vector>
 
 #include "Stream.h"
 
 static void BM_Stream_FIFO(benchmark::State& state) {
   for (auto _ : state) {
     Stream stream;
-    int total_n = 1 << 12;
+
+    int N = 1 << 12;
+    int r = 0;
     {
       std::jthread write([&]() {
-        for (int i : std::ranges::views::iota(0, total_n)) stream.write(i);
+        for (int i : std::ranges::views::iota(0, N))
+          while (!stream.try_write(i)) __asm__ volatile("yield");
       });
 
       std::jthread read([&]() {
-        for (int i : std::ranges::views::iota(0, total_n)) stream.read();
+        for (int i : std::ranges::views::iota(0, N))
+          while (!stream.try_read(r)) __asm__ volatile("yield");
       });
     }
   }
