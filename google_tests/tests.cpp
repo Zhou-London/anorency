@@ -1,8 +1,13 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <ranges>
+#include <string>
 #include <thread>
+#include <vector>
 
+#include "Message.h"
+#include "MessageWrappers.h"
 #include "Stream.h"
 #include "version.h"
 
@@ -42,3 +47,54 @@ TEST(Streams, StreamFIFOTest) {
   EXPECT_EQ(r, 1023);
 }
 
+TEST(Messages, MessageConsistencyTest) {
+  constexpr int N = 4096;
+
+  auto testing = std::array<int, N>();
+  for (int i : std::ranges::views::iota(0, N)) {
+    testing[i] = i * i;
+  }
+
+  std::vector<MessageS> v;
+  v.reserve(N);
+
+  for (int i : std::ranges::views::iota(0, N)) {
+    v.emplace_back(std::move(MessageS::make<int>(i * i)));
+  }
+
+  for (int i = 0; i < N; ++i) {
+    const auto msg = v[i].try_get<int>();
+    if (msg) {
+      EXPECT_EQ(*msg, testing[i]);
+    }
+  }
+}
+
+TEST(Messages, MessageTypesTest) {
+  {
+    auto msg = MessageS::make<std::string>("Hello world.");
+
+    EXPECT_EQ(msg.try_get<int>(), nullptr);
+    EXPECT_EQ(msg.try_get<float>(), nullptr);
+    EXPECT_EQ(*msg.try_get<std::string>(), "Hello world.");
+  }
+
+  int x = 10;
+  {
+    struct Content {
+      int* ptr;
+
+      Content() noexcept = default;
+      Content(int& x) noexcept : ptr(&x) {}
+
+      ~Content() {
+        *ptr = 5;
+        ptr = nullptr;
+      }
+    };
+
+    auto msg = MessageS::make<Content>(x);
+    EXPECT_EQ(msg.try_get<Content>()->ptr, &x);
+  }
+  EXPECT_EQ(x, 5);
+}
