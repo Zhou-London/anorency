@@ -49,6 +49,7 @@ MessageView Message<N, Align>::view() const noexcept {
 
 template <std::size_t N, std::size_t Align>
 template <class T>
+  requires std::is_nothrow_move_constructible_v<T>
 const T* Message<N, Align>::try_get() const noexcept {
   if (!ops_ || ops_->type() != Anorency::types::type_id<T>()) return nullptr;
   return std::launder(reinterpret_cast<const T*>(storage_));
@@ -72,19 +73,30 @@ Message<N, Align> Message<N, Align>::make(Args&&... args) {
 
 template <std::size_t N, std::size_t Align>
 void Message<N, Align>::reset() noexcept {
-  if (ops_) {
-    ops_->destroy(storage_);
-    ops_ = nullptr;
-  }
+  if (!ops_) return;
+
+  void* obj = use_external_storage_ ? external_.ptr : storage_;
+  ops_->destroy(obj);
+
+  if (use_external_storage_) external_.deallocate(external_.ptr);
+
+  ops_ = nullptr;
+  use_external_storage_ = false;
 }
 
 template <std::size_t N, std::size_t Align>
 void Message<N, Align>::move_from(Message<N, Align>& other) noexcept {
   if (!other.ops_) {
     ops_ = nullptr;
+    use_external_storage_ = false;
     return;
   }
-  other.ops_->move_to(other.storage_, storage_);
+
+  if (!use_external_storage_)
+    other.ops_->move_to(other.storage_, storage_);
+  else
+    external_ = other.external_;
+
   ops_ = other.ops_;
   other.ops_ = nullptr;
 }

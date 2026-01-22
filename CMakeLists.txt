@@ -19,6 +19,8 @@ target_include_directories(anorency PUBLIC
     include/Streams
     include/Messages
     include/util
+    include/Pools
+    include/interfaces
 )
 
 target_link_libraries(anorency PUBLIC

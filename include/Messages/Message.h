@@ -1,8 +1,10 @@
 #pragma once
 
 #include <cstddef>
+#include <type_traits>
 
 #include "alias.h"
+#include "mem_pool_wrapper.h"
 
 #define DEFAULT_MSG_SIZE 64
 
@@ -11,6 +13,14 @@ namespace Anorency {
 struct MessageView {
   type_id_t type;
   const void* data;
+};
+
+struct MessageStorage {
+  void* ptr;
+  std::size_t size;
+  std::size_t align;
+
+  void (*deallocate)(void*) noexcept;
 };
 
 template <std::size_t N = DEFAULT_MSG_SIZE,
@@ -39,14 +49,26 @@ class Message {
   MessageView view() const noexcept;
 
   template <class T>
+    requires std::is_nothrow_move_constructible_v<T>
   const T* try_get() const noexcept;
 
   template <class T, class... Args>
   static Message make(Args&&... args);
 
+  // TODO:Not yet implemented
+  template <class T, class Pool, class... Args>
+    requires std::is_nothrow_move_constructible_v<T> &&
+             interfaces::mem_pool_wrapper<Pool>
+  static Message make(Pool& pool, Args&&... args);
+
  private:
-  alignas(Align) std::byte storage_[N];
+  union {
+    alignas(Align) std::byte storage_[N];
+    MessageStorage external_;
+  };
+
   const MsgOps* ops_ = nullptr;
+  bool use_external_storage_ = false;
 
   void reset() noexcept;
 
