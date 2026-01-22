@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdlib>
 #include <new>
 #include <type_traits>
 #include <utility>
@@ -44,8 +45,9 @@ type_id_t Message<N, Align>::type_id() const noexcept {
 
 template <std::size_t N, std::size_t Align>
 MessageView Message<N, Align>::view() const noexcept {
-  return MessageView{ops_ ? ops_->type() : nullptr,
-                     ops_ ? static_cast<const void*>(storage_) : nullptr};
+  const void* data =
+      use_external_storage_ ? external_.ptr : static_cast<const void*>(storage_);
+  return MessageView{ops_ ? ops_->type() : nullptr, ops_ ? data : nullptr};
 }
 
 template <std::size_t N, std::size_t Align>
@@ -53,7 +55,9 @@ template <class T>
   requires std::is_nothrow_move_constructible_v<T>
 const T* Message<N, Align>::try_get() const noexcept {
   if (!ops_ || ops_->type() != Anorency::types::type_id<T>()) return nullptr;
-  return std::launder(reinterpret_cast<const T*>(storage_));
+  const void* obj =
+      use_external_storage_ ? external_.ptr : static_cast<const void*>(storage_);
+  return std::launder(reinterpret_cast<const T*>(obj));
 }
 
 template <std::size_t N, std::size_t Align>
@@ -74,10 +78,28 @@ Message<N, Align> Message<N, Align>::make(Args&&... args) {
 
 template <std::size_t N, std::size_t Align>
 template <class T, class Pool, class... Args>
-    requires std::is_nothrow_move_constructible_v<T> && interfaces::mem_pool_wrapper<Pool>
-Message<N, Align> Message<N, Align>::make(Pool& pool, Args&&... args){
-    Message m;
-    
+    requires std::is_nothrow_move_constructible_v<T> &&
+             interfaces::mem_pool_wrapper<Pool>
+Message<N, Align> Message<N, Align>::make(Pool& pool, Args&&... args) {
+  static_assert(std::is_nothrow_constructible_v<T>, "payload lack of CTRs");
+  static_assert(std::is_nothrow_destructible_v<T>, "payload lack of DTRs");
+
+  Message m;
+
+  void* ptr = pool.allocate(sizeof(T), alignof(T));
+  if (!ptr) return m;
+
+  new (ptr) T(std::forward<Args>(args)...);
+
+  m.external_.ptr = ptr;
+  m.external_.size = sizeof(T);
+  m.external_.align = alignof(T);
+  m.external_.deallocate = [](void* p) noexcept { std::free(p); };
+
+  m.ops_ = &ops_for<T>();
+  m.use_external_storage_ = true;
+
+  return m;
 }
 
 template <std::size_t N, std::size_t Align>
@@ -101,13 +123,17 @@ void Message<N, Align>::move_from(Message<N, Align>& other) noexcept {
     return;
   }
 
-  if (!use_external_storage_)
-    other.ops_->move_to(other.storage_, storage_);
-  else
+  if (other.use_external_storage_) {
     external_ = other.external_;
+    use_external_storage_ = true;
+  } else {
+    other.ops_->move_to(other.storage_, storage_);
+    use_external_storage_ = false;
+  }
 
   ops_ = other.ops_;
   other.ops_ = nullptr;
+  other.use_external_storage_ = false;
 }
 
 template <std::size_t N, std::size_t Align>
