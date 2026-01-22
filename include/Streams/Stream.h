@@ -26,7 +26,8 @@ class Stream {
   alignas(64) std::atomic<uint32_t> head_;
   alignas(64) std::atomic<uint32_t> tail_;
 
-  alignas(64) std::array<T, Capacity> buffer_;
+  // alignas(64)
+  std::array<T, Capacity> buffer_;
 };
 }  // namespace Anorency
 #include "Stream.inl"
