@@ -1,25 +1,53 @@
 #include <benchmark/benchmark.h>
+#include <pthread/qos.h>
+#include <sys/qos.h>
 
-#include <algorithm>
-#include <iostream>
-#include <ranges>
+#include <atomic>
 #include <thread>
-#include <vector>
 
 #include "Stream.h"
+#include "os_util.h"
+
+using namespace Anorency;
 
 static void BM_Stream_FIFO(benchmark::State& state) {
-  for (auto _ : state) {
-    Stream stream;
-    int total_n = 1 << 12;
-    {
-      std::jthread write([&]() {
-        for (int i : std::ranges::views::iota(0, total_n)) stream.write(i);
-      });
+  constexpr int N = 1 << 22;
+  auto stream = Stream<int>();
+  std::atomic<bool> start{false};
 
-      std::jthread read([&]() {
-        for (int i : std::ranges::views::iota(0, total_n)) stream.read();
-      });
+  int r = 0;
+
+  std::jthread writer([&]() {
+    pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+    while (!start.load(std::memory_order_acquire)) {
+    }
+
+    for (int i = 0; i < N; ++i)
+      while (!stream.try_write(i)) {
+        cpu_relax();
+      }
+  });
+
+  std::jthread reader([&]() {
+    pthread_set_qos_class_self_np(QOS_CLASS_USER_INTERACTIVE, 0);
+    while (!start.load(std::memory_order_acquire)) {
+    }
+
+    for (int i = 0; i < N; ++i)
+      while (!stream.try_read(r)) {
+        cpu_relax();
+      }
+  });
+
+  for (auto _ : state) {
+    start.store(false, std::memory_order_relaxed);
+
+    benchmark::DoNotOptimize(r);
+
+    start.store(true, std::memory_order_release);
+
+    while (stream.size() != 0) {
+      cpu_relax();
     }
   }
 }
