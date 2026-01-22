@@ -6,6 +6,7 @@
 #include <utility>
 
 #include "Message.h"
+#include "mem_pool_wrapper.h"
 #include "types.h"
 
 namespace Anorency {
@@ -69,6 +70,14 @@ Message<N, Align> Message<N, Align>::make(Args&&... args) {
 
   m.ops_ = &ops_for<T>();
   return m;
+}
+
+template <std::size_t N, std::size_t Align>
+template <class T, class Pool, class... Args>
+    requires std::is_nothrow_move_constructible_v<T> && interfaces::mem_pool_wrapper<Pool>
+Message<N, Align> Message<N, Align>::make(Pool& pool, Args&&... args){
+    Message m;
+    
 }
 
 template <std::size_t N, std::size_t Align>
