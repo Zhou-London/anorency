@@ -17,10 +17,11 @@ struct MessageView {
 
 struct MessageStorage {
   void* ptr;
+  void* pool;  // type-erased pool pointer (nullptr if not pool-allocated)
   std::size_t size;
   std::size_t align;
 
-  void (*deallocate)(void*) noexcept;
+  void (*deallocate)(void* pool, void* ptr) noexcept;
 };
 
 template <std::size_t N = DEFAULT_MSG_SIZE,

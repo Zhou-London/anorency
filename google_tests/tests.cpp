@@ -12,6 +12,7 @@
 #include "MessageWrappers.h"
 #include "Stream.h"
 #include "mem_pool_wrapper.h"
+#include "os_util.h"
 #include "types.h"
 #include "version.h"
 
@@ -251,4 +252,81 @@ TEST(Messages, PoolBasedMessageConsistency) {
     ASSERT_NE(msg, nullptr);
     EXPECT_EQ(*msg, i * i);
   }
+}
+
+// ============================================================================
+// OS Utilities Tests
+// ============================================================================
+
+TEST(OsUtil, PlatformDetectionMacrosExist) {
+  // Verify exactly one architecture is defined
+  int arch_count = 0;
+#ifdef ANORENCY_ARCH_X86_64
+  ++arch_count;
+#endif
+#ifdef ANORENCY_ARCH_ARM64
+  ++arch_count;
+#endif
+  EXPECT_EQ(arch_count, 1) << "Exactly one architecture macro should be defined";
+
+  // Verify exactly one OS is defined
+  int os_count = 0;
+#ifdef ANORENCY_OS_LINUX
+  ++os_count;
+#endif
+#ifdef ANORENCY_OS_MACOS
+  ++os_count;
+#endif
+  EXPECT_EQ(os_count, 1) << "Exactly one OS macro should be defined";
+}
+
+TEST(OsUtil, CpuRelaxDoesNotCrash) {
+  // Simply call cpu_relax() multiple times to ensure it doesn't crash
+  for (int i = 0; i < 1000; ++i) {
+    Anorency::cpu_relax();
+  }
+}
+
+TEST(OsUtil, CpuRelaxInSpinLoop) {
+  // Test cpu_relax() in a realistic spin-loop scenario
+  std::atomic<bool> flag{false};
+  int iterations = 0;
+
+  std::jthread setter([&]() {
+    std::this_thread::sleep_for(std::chrono::microseconds(100));
+    flag.store(true, std::memory_order_release);
+  });
+
+  while (!flag.load(std::memory_order_acquire)) {
+    Anorency::cpu_relax();
+    ++iterations;
+  }
+
+  EXPECT_GT(iterations, 0) << "Should have spun at least once";
+}
+
+TEST(OsUtil, SetThreadAffinityDoesNotCrash) {
+  // Test that set_thread_affinity doesn't crash for valid core indices
+  // Note: On macOS this sets affinity tags (hints), on Linux it pins to cores
+  Anorency::set_thread_affinity(0);
+}
+
+TEST(OsUtil, SetThreadAffinityMultipleCores) {
+  // Test setting affinity to different cores in sequence
+  for (int core = 0; core < 4; ++core) {
+    Anorency::set_thread_affinity(core);
+  }
+}
+
+TEST(OsUtil, SetThreadAffinityInThread) {
+  // Test thread affinity from within a spawned thread
+  std::atomic<bool> affinity_set{false};
+
+  std::jthread worker([&]() {
+    Anorency::set_thread_affinity(0);
+    affinity_set.store(true, std::memory_order_release);
+  });
+
+  worker.join();
+  EXPECT_TRUE(affinity_set.load());
 }

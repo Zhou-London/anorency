@@ -107,9 +107,10 @@ inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
       free_lists_[idx] = block->next;
 
       std::byte* block_ptr = reinterpret_cast<std::byte*>(block);
-      std::size_t* header = reinterpret_cast<std::size_t*>(block_ptr);
-      header[0] = idx;          // bucket index
-      header[1] = data_offset;  // offset to data
+      // Store bucket_idx at block start
+      *reinterpret_cast<std::size_t*>(block_ptr) = idx;
+      // Store data_offset right before data (so deallocate can find it)
+      *reinterpret_cast<std::size_t*>(block_ptr + data_offset - sizeof(std::size_t)) = data_offset;
 
       return block_ptr + data_offset;
     }
@@ -123,9 +124,10 @@ inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
       std::byte* block_ptr = pool_ + aligned_offset;
       pool_offset_ = aligned_offset + block_size;
 
-      std::size_t* header = reinterpret_cast<std::size_t*>(block_ptr);
-      header[0] = idx;
-      header[1] = data_offset;
+      // Store bucket_idx at block start
+      *reinterpret_cast<std::size_t*>(block_ptr) = idx;
+      // Store data_offset right before data (so deallocate can find it)
+      *reinterpret_cast<std::size_t*>(block_ptr + data_offset - sizeof(std::size_t)) = data_offset;
 
       return block_ptr + data_offset;
     }
@@ -141,11 +143,13 @@ inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
   void* block = std::aligned_alloc(actual_align, total_size);
   if (!block) return nullptr;
 
-  std::size_t* header = reinterpret_cast<std::size_t*>(block);
-  header[0] = LARGE_ALLOC_MARKER;
-  header[1] = data_offset;
+  std::byte* block_ptr = static_cast<std::byte*>(block);
+  // Store LARGE_ALLOC_MARKER at block start
+  *reinterpret_cast<std::size_t*>(block_ptr) = LARGE_ALLOC_MARKER;
+  // Store data_offset right before data (so deallocate can find it)
+  *reinterpret_cast<std::size_t*>(block_ptr + data_offset - sizeof(std::size_t)) = data_offset;
 
-  return static_cast<std::byte*>(block) + data_offset;
+  return block_ptr + data_offset;
 }
 
 inline void MemPool::deallocate(void* ptr) noexcept {

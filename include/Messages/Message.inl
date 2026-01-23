@@ -12,6 +12,17 @@
 
 namespace Anorency {
 
+namespace detail {
+template <class Pool>
+void pool_deallocator(void* pool_ptr, void* ptr) noexcept {
+  static_cast<Pool*>(pool_ptr)->deallocate(ptr);
+}
+
+inline void free_deallocator(void* /*unused*/, void* ptr) noexcept {
+  std::free(ptr);
+}
+}  // namespace detail
+
 template <std::size_t N, std::size_t Align>
 Message<N, Align>::Message(Message<N, Align>&& other) noexcept {
   move_from(other);
@@ -92,9 +103,10 @@ Message<N, Align> Message<N, Align>::make(Pool& pool, Args&&... args) {
   new (ptr) T(std::forward<Args>(args)...);
 
   m.external_.ptr = ptr;
+  m.external_.pool = &pool;
   m.external_.size = sizeof(T);
   m.external_.align = alignof(T);
-  m.external_.deallocate = [](void* p) noexcept { std::free(p); };
+  m.external_.deallocate = &detail::pool_deallocator<Pool>;
 
   m.ops_ = &ops_for<T>();
   m.use_external_storage_ = true;
@@ -109,7 +121,7 @@ void Message<N, Align>::reset() noexcept {
   void* obj = use_external_storage_ ? external_.ptr : storage_;
   ops_->destroy(obj);
 
-  if (use_external_storage_) external_.deallocate(external_.ptr);
+  if (use_external_storage_) external_.deallocate(external_.pool, external_.ptr);
 
   ops_ = nullptr;
   use_external_storage_ = false;
