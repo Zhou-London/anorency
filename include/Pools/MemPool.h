@@ -55,7 +55,7 @@ class MemPool {
   std::byte* pool_;
   std::size_t pool_size_;
   offset_t pool_offset_;
-  std::array<FreeBlock*, NUM_BUCKETS> free_lists_;
+  std::array<FreeBlockPtr, NUM_BUCKETS> free_lists_;
 
   static constexpr bucket_index_t bucket_for_size(std::size_t size) noexcept {
     if (size <= 16) return 0;
@@ -118,9 +118,7 @@ inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
       BusyBlockPtr block_ptr = pool_ + aligned_offset;
       pool_offset_ = aligned_offset + block_size;
 
-      *reinterpret_cast<std::size_t*>(block_ptr) = idx;
-      *reinterpret_cast<std::size_t*>(block_ptr + data_offset -
-                                      sizeof(std::size_t)) = data_offset;
+      fill_header(block_ptr, idx, data_offset);
 
       return block_ptr + data_offset;
     }
@@ -136,11 +134,9 @@ inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
   void* block = std::aligned_alloc(actual_align, total_size);
   if (!block) return nullptr;
 
-  std::byte* block_ptr = static_cast<std::byte*>(block);
+  auto block_ptr = static_cast<BusyBlockPtr>(block);
 
-  *reinterpret_cast<std::size_t*>(block_ptr) = LARGE_ALLOC_MARKER;
-  *reinterpret_cast<std::size_t*>(block_ptr + data_offset -
-                                  sizeof(std::size_t)) = data_offset;
+  fill_header(block_ptr, LARGE_ALLOC_MARKER, data_offset);
 
   return block_ptr + data_offset;
 }
@@ -148,11 +144,11 @@ inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
 inline void MemPool::deallocate(void* ptr) noexcept {
   if (!ptr) return;
 
-  std::byte* data = static_cast<std::byte*>(ptr);
+  auto data = static_cast<BusyBlockPtr>(ptr);
 
-  std::size_t data_offset = *reinterpret_cast<std::size_t*>(data - 8);
-  std::byte* block = data - data_offset;
-  std::size_t idx = *reinterpret_cast<std::size_t*>(block);
+  auto data_offset = *reinterpret_cast<offset_t*>(data - sizeof(offset_t));
+  BusyBlockPtr block = data - data_offset;
+  auto idx = *reinterpret_cast<bucket_index_t*>(block);
 
   if (idx == LARGE_ALLOC_MARKER) {
     std::free(block);
@@ -160,7 +156,7 @@ inline void MemPool::deallocate(void* ptr) noexcept {
   }
 
   if (pool_ && block >= pool_ && block < pool_ + pool_size_) {
-    FreeBlock* fb = reinterpret_cast<FreeBlock*>(block);
+    auto fb = as_free_block(block);
     fb->next = free_lists_[idx];
     free_lists_[idx] = fb;
   } else {
