@@ -17,10 +17,11 @@ struct MessageView {
 
 struct MessageStorage {
   void* ptr;
+  void* pool;  // type-erased pool pointer (nullptr if not pool-allocated)
   std::size_t size;
   std::size_t align;
 
-  void (*deallocate)(void*) noexcept;
+  void (*deallocate)(void* pool, void* ptr) noexcept;
 };
 
 template <std::size_t N = DEFAULT_MSG_SIZE,
@@ -55,7 +56,6 @@ class Message {
   template <class T, class... Args>
   static Message make(Args&&... args);
 
-  // TODO:Not yet implemented
   template <class T, class Pool, class... Args>
     requires std::is_nothrow_move_constructible_v<T> &&
              interfaces::mem_pool_wrapper<Pool>
