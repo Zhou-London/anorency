@@ -24,19 +24,40 @@ class MemPool {
   void* allocate(std::size_t size, std::size_t align) noexcept;
   void deallocate(void* ptr) noexcept;
 
+  // Type & Alias
  private:
   struct FreeBlock {
     FreeBlock* next;
   };
 
+  using FreeBlockPtr = FreeBlock*;
+  using BusyBlockPtr = std::byte*;
+  using bucket_index_t = std::size_t;
+  using offset_t = std::size_t;
+
+  static FreeBlockPtr as_free_block(BusyBlockPtr ptr) noexcept {
+    return reinterpret_cast<FreeBlockPtr>(ptr);
+  }
+
+  static BusyBlockPtr as_busy_block(FreeBlockPtr block) noexcept {
+    return reinterpret_cast<BusyBlockPtr>(block);
+  }
+
+  static void fill_header(BusyBlockPtr block, bucket_index_t idx,
+                          offset_t offset) noexcept {
+    *reinterpret_cast<bucket_index_t*>(block) = idx;
+    *reinterpret_cast<offset_t*>(block + offset - sizeof(offset_t)) = offset;
+  }
+
+ private:
   static constexpr std::size_t LARGE_ALLOC_MARKER = ~std::size_t(0);
 
   std::byte* pool_;
   std::size_t pool_size_;
-  std::size_t pool_offset_;
+  offset_t pool_offset_;
   std::array<FreeBlock*, NUM_BUCKETS> free_lists_;
 
-  static constexpr std::size_t bucket_for_size(std::size_t size) noexcept {
+  static constexpr bucket_index_t bucket_for_size(std::size_t size) noexcept {
     if (size <= 16) return 0;
     if (size <= 32) return 1;
     if (size <= 64) return 2;
@@ -78,6 +99,7 @@ inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
   bool use_pool = (idx < NUM_BUCKETS) && (data_offset == HEADER_SIZE);
 
   if (use_pool) {
+    // Allocate from free list
     if (free_lists_[idx] != nullptr) {
       FreeBlock* block = free_lists_[idx];
       free_lists_[idx] = block->next;
@@ -107,6 +129,7 @@ inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
     }
   }
 
+  // Allocate from system.
   std::size_t actual_align = align > sizeof(void*) ? align : sizeof(void*);
   if (actual_align < HEADER_SIZE) actual_align = HEADER_SIZE;
 
