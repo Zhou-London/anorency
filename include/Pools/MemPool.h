@@ -43,9 +43,9 @@ class MemPool {
     return reinterpret_cast<BusyBlockPtr>(block);
   }
 
-  static void fill_header(BusyBlockPtr block, bucket_index_t idx,
+  static void fill_header(BusyBlockPtr block, bucket_index_t index,
                           offset_t offset) noexcept {
-    *reinterpret_cast<bucket_index_t*>(block) = idx;
+    *reinterpret_cast<bucket_index_t*>(block) = index;
     *reinterpret_cast<offset_t*>(block + offset - sizeof(offset_t)) = offset;
   }
 
@@ -93,32 +93,29 @@ inline MemPool::~MemPool() noexcept { std::free(pool_); }
 inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
   if (size == 0) return nullptr;
 
-  std::size_t data_offset = align > HEADER_SIZE ? align : HEADER_SIZE;
+  offset_t data_offset = align > HEADER_SIZE ? align : HEADER_SIZE;
 
-  std::size_t idx = bucket_for_size(size);
+  auto idx = bucket_for_size(size);
   bool use_pool = (idx < NUM_BUCKETS) && (data_offset == HEADER_SIZE);
 
   if (use_pool) {
     // Allocate from free list
     if (free_lists_[idx] != nullptr) {
-      FreeBlock* block = free_lists_[idx];
+      auto block = free_lists_[idx];
       free_lists_[idx] = block->next;
 
-      std::byte* block_ptr = reinterpret_cast<std::byte*>(block);
-      *reinterpret_cast<std::size_t*>(block_ptr) = idx;
-      *reinterpret_cast<std::size_t*>(block_ptr + data_offset -
-                                      sizeof(std::size_t)) = data_offset;
+      fill_header(as_busy_block(block), idx, data_offset);
 
-      return block_ptr + data_offset;
+      return as_busy_block(block) + data_offset;
     }
 
     // Allocate from pool
-    std::size_t block_size = bucket_block_size(idx);
-    std::size_t aligned_offset =
+    auto block_size = bucket_block_size(idx);
+    offset_t aligned_offset =
         (pool_offset_ + HEADER_SIZE - 1) & ~(HEADER_SIZE - 1);
 
     if (pool_ && aligned_offset + block_size <= pool_size_) {
-      std::byte* block_ptr = pool_ + aligned_offset;
+      BusyBlockPtr block_ptr = pool_ + aligned_offset;
       pool_offset_ = aligned_offset + block_size;
 
       *reinterpret_cast<std::size_t*>(block_ptr) = idx;
