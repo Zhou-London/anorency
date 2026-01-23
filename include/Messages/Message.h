@@ -56,7 +56,6 @@ class Message {
   template <class T, class... Args>
   static Message make(Args&&... args);
 
-  // TODO:Not yet implemented
   template <class T, class Pool, class... Args>
     requires std::is_nothrow_move_constructible_v<T> &&
              interfaces::mem_pool_wrapper<Pool>

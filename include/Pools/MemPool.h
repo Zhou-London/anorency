@@ -6,25 +6,12 @@
 
 namespace Anorency {
 
-/**
- * Memory pool with pre-allocated memory and size-class buckets.
- *
- * Design:
- * - Pre-allocates a contiguous memory block upfront
- * - Uses size-class buckets (16, 32, 64, 128, 256, 512, 1024 bytes)
- * - Each bucket maintains a free list for O(1) reuse
- * - Falls back to system allocator when pool is exhausted or size/align too large
- *
- * Block layout:
- * [bucket_idx: 8 bytes][data_offset: 8 bytes][padding...][DATA]
- *                                                        ^returned pointer
- */
 class MemPool {
  public:
-  static constexpr std::size_t DEFAULT_POOL_SIZE = 1024 * 1024;  // 1 MB
+  static constexpr std::size_t DEFAULT_POOL_SIZE = 1024 * 1024;
   static constexpr std::size_t NUM_BUCKETS = 7;
-  static constexpr std::size_t HEADER_SIZE = 16;       // bucket_idx + data_offset
-  static constexpr std::size_t MAX_POOLED_SIZE = 1024; // Largest bucket usable size
+  static constexpr std::size_t HEADER_SIZE = 16;
+  static constexpr std::size_t MAX_POOLED_SIZE = 1024;
 
   explicit MemPool(std::size_t pool_size = DEFAULT_POOL_SIZE) noexcept;
   ~MemPool() noexcept;
@@ -49,7 +36,6 @@ class MemPool {
   std::size_t pool_offset_;
   std::array<FreeBlock*, NUM_BUCKETS> free_lists_;
 
-  // Bucket usable sizes: 16, 32, 64, 128, 256, 512, 1024
   static constexpr std::size_t bucket_for_size(std::size_t size) noexcept {
     if (size <= 16) return 0;
     if (size <= 32) return 1;
@@ -66,7 +52,6 @@ class MemPool {
     return sizes[idx];
   }
 
-  // Total block size = header + usable
   static constexpr std::size_t bucket_block_size(std::size_t idx) noexcept {
     return HEADER_SIZE + bucket_usable_size(idx);
   }
@@ -82,35 +67,25 @@ inline MemPool::MemPool(std::size_t pool_size) noexcept
   }
 }
 
-inline MemPool::~MemPool() noexcept {
-  std::free(pool_);
-}
+inline MemPool::~MemPool() noexcept { std::free(pool_); }
 
 inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
   if (size == 0) return nullptr;
 
-  // Calculate data offset: must fit header (16 bytes) and align data
-  std::size_t data_offset = HEADER_SIZE;
-  if (align > HEADER_SIZE) {
-    data_offset = align;  // e.g., align=32 -> offset=32
-  }
+  std::size_t data_offset = align > HEADER_SIZE ? align : HEADER_SIZE;
 
   std::size_t idx = bucket_for_size(size);
-
-  // Use pool only for standard alignment (offset=16) and size within buckets
   bool use_pool = (idx < NUM_BUCKETS) && (data_offset == HEADER_SIZE);
 
   if (use_pool) {
-    // Try free list first (O(1) reuse)
     if (free_lists_[idx] != nullptr) {
       FreeBlock* block = free_lists_[idx];
       free_lists_[idx] = block->next;
 
       std::byte* block_ptr = reinterpret_cast<std::byte*>(block);
-      // Store bucket_idx at block start
       *reinterpret_cast<std::size_t*>(block_ptr) = idx;
-      // Store data_offset right before data (so deallocate can find it)
-      *reinterpret_cast<std::size_t*>(block_ptr + data_offset - sizeof(std::size_t)) = data_offset;
+      *reinterpret_cast<std::size_t*>(block_ptr + data_offset -
+                                      sizeof(std::size_t)) = data_offset;
 
       return block_ptr + data_offset;
     }
@@ -124,16 +99,14 @@ inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
       std::byte* block_ptr = pool_ + aligned_offset;
       pool_offset_ = aligned_offset + block_size;
 
-      // Store bucket_idx at block start
       *reinterpret_cast<std::size_t*>(block_ptr) = idx;
-      // Store data_offset right before data (so deallocate can find it)
-      *reinterpret_cast<std::size_t*>(block_ptr + data_offset - sizeof(std::size_t)) = data_offset;
+      *reinterpret_cast<std::size_t*>(block_ptr + data_offset -
+                                      sizeof(std::size_t)) = data_offset;
 
       return block_ptr + data_offset;
     }
   }
 
-  // Fallback: system allocator for large/high-align allocations
   std::size_t actual_align = align > sizeof(void*) ? align : sizeof(void*);
   if (actual_align < HEADER_SIZE) actual_align = HEADER_SIZE;
 
@@ -144,10 +117,10 @@ inline void* MemPool::allocate(std::size_t size, std::size_t align) noexcept {
   if (!block) return nullptr;
 
   std::byte* block_ptr = static_cast<std::byte*>(block);
-  // Store LARGE_ALLOC_MARKER at block start
+
   *reinterpret_cast<std::size_t*>(block_ptr) = LARGE_ALLOC_MARKER;
-  // Store data_offset right before data (so deallocate can find it)
-  *reinterpret_cast<std::size_t*>(block_ptr + data_offset - sizeof(std::size_t)) = data_offset;
+  *reinterpret_cast<std::size_t*>(block_ptr + data_offset -
+                                  sizeof(std::size_t)) = data_offset;
 
   return block_ptr + data_offset;
 }
@@ -157,12 +130,6 @@ inline void MemPool::deallocate(void* ptr) noexcept {
 
   std::byte* data = static_cast<std::byte*>(ptr);
 
-  // Read data_offset from right before data (at offset -8 from data, which is header[1])
-  // Actually header[1] is at block + 8, and data is at block + data_offset
-  // So we read from (data - data_offset + 8) which requires knowing data_offset first
-  // Solution: For standard offset (16), header[1] is at data - 8
-
-  // First assume standard offset to read the actual offset
   std::size_t data_offset = *reinterpret_cast<std::size_t*>(data - 8);
   std::byte* block = data - data_offset;
   std::size_t idx = *reinterpret_cast<std::size_t*>(block);
@@ -172,9 +139,7 @@ inline void MemPool::deallocate(void* ptr) noexcept {
     return;
   }
 
-  // Check if block is within our pool
   if (pool_ && block >= pool_ && block < pool_ + pool_size_) {
-    // Return to free list for reuse
     FreeBlock* fb = reinterpret_cast<FreeBlock*>(block);
     fb->next = free_lists_[idx];
     free_lists_[idx] = fb;

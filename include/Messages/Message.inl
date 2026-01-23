@@ -79,7 +79,6 @@ Message<N, Align> Message<N, Align>::make(Args&&... args) {
   static_assert(std::is_nothrow_constructible_v<T>, "payload lack of CTRs");
   static_assert(std::is_nothrow_destructible_v<T>, "payload lack of DTRs");
 
-  // WARN: new
   Message m;
   new (m.storage_) T(std::forward<Args>(args)...);
 
