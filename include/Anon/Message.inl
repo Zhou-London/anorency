@@ -6,11 +6,10 @@
 #include <type_traits>
 #include <utility>
 
-#include "Message.h"
-#include "mem_pool_wrapper.h"
-#include "types.h"
+#include "Anon/Message.h"
+#include "Anon/Types.h"
 
-namespace Anorency {
+namespace Anon {
 
 namespace detail {
 template <class Pool>
@@ -56,8 +55,8 @@ type_id_t Message<N, Align>::type_id() const noexcept {
 
 template <std::size_t N, std::size_t Align>
 MessageView Message<N, Align>::view() const noexcept {
-  const void* data =
-      use_external_storage_ ? external_.ptr : static_cast<const void*>(storage_);
+  const void* data = use_external_storage_ ? external_.ptr
+                                           : static_cast<const void*>(storage_);
   return MessageView{ops_ ? ops_->type() : nullptr, ops_ ? data : nullptr};
 }
 
@@ -65,9 +64,9 @@ template <std::size_t N, std::size_t Align>
 template <class T>
   requires std::is_nothrow_move_constructible_v<T>
 const T* Message<N, Align>::try_get() const noexcept {
-  if (!ops_ || ops_->type() != Anorency::types::type_id<T>()) return nullptr;
-  const void* obj =
-      use_external_storage_ ? external_.ptr : static_cast<const void*>(storage_);
+  if (!ops_ || ops_->type() != Anon::types::type_id<T>()) return nullptr;
+  const void* obj = use_external_storage_ ? external_.ptr
+                                          : static_cast<const void*>(storage_);
   return std::launder(reinterpret_cast<const T*>(obj));
 }
 
@@ -88,8 +87,7 @@ Message<N, Align> Message<N, Align>::make(Args&&... args) {
 
 template <std::size_t N, std::size_t Align>
 template <class T, class Pool, class... Args>
-    requires std::is_nothrow_move_constructible_v<T> &&
-             interfaces::mem_pool_wrapper<Pool>
+  requires std::is_nothrow_move_constructible_v<T> && mem_pool_wrapper<Pool>
 Message<N, Align> Message<N, Align>::make(Pool& pool, Args&&... args) {
   static_assert(std::is_nothrow_constructible_v<T>, "payload lack of CTRs");
   static_assert(std::is_nothrow_destructible_v<T>, "payload lack of DTRs");
@@ -120,7 +118,8 @@ void Message<N, Align>::reset() noexcept {
   void* obj = use_external_storage_ ? external_.ptr : storage_;
   ops_->destroy(obj);
 
-  if (use_external_storage_) external_.deallocate(external_.pool, external_.ptr);
+  if (use_external_storage_)
+    external_.deallocate(external_.pool, external_.ptr);
 
   ops_ = nullptr;
   use_external_storage_ = false;
@@ -160,9 +159,9 @@ const Message<N, Align>::MsgOps& Message<N, Align>::ops_for() noexcept {
         new (move_dst) T(std::move(*s));
         s->~T();
       },
-      []() noexcept -> type_id_t { return Anorency::types::type_id<T>(); }};
+      []() noexcept -> type_id_t { return Anon::types::type_id<T>(); }};
 
   return ops;
 }
 
-}  // namespace Anorency
+}  // namespace Anon

@@ -7,16 +7,13 @@
 #include <thread>
 #include <vector>
 
-#include "MemPool.h"
-#include "Message.h"
-#include "MessageWrappers.h"
-#include "Stream.h"
-#include "mem_pool_wrapper.h"
-#include "os_util.h"
-#include "types.h"
-#include "version.h"
+#include "Anon/Message.h"
+#include "Anon/MemPool.h"
+#include "Anon/Stream.h"
+#include "Anon/Types.h"
+#include "Anon/Version.h"
 
-using namespace Anorency;
+using namespace Anon;
 
 TEST(Info, info) { EXPECT_EQ(version(), "v0.1"); }
 
@@ -105,7 +102,7 @@ TEST(Messages, MessageTypesTest) {
 }
 
 TEST(MemPool, BasicAllocation) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   void* ptr = pool.allocate(64, 8);
   ASSERT_NE(ptr, nullptr);
@@ -115,7 +112,7 @@ TEST(MemPool, BasicAllocation) {
 }
 
 TEST(MemPool, AlignedAllocation) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   for (std::size_t align : {8, 16, 32, 64, 128}) {
     void* ptr = pool.allocate(100, align);
@@ -126,7 +123,7 @@ TEST(MemPool, AlignedAllocation) {
 }
 
 TEST(MemPool, ZeroSizeAllocation) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   void* ptr = pool.allocate(0, 8);
   EXPECT_EQ(ptr, nullptr);
@@ -134,16 +131,16 @@ TEST(MemPool, ZeroSizeAllocation) {
 
 TEST(Messages, PoolBasedMessageConceptCheck) {
   // Verify MemPool satisfies the concept
-  static_assert(Anorency::interfaces::mem_pool_wrapper<Anorency::MemPool>,
+  static_assert(Anon::mem_pool_wrapper<Anon::MemPool>,
                 "MemPool must satisfy mem_pool_wrapper concept");
 
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   auto msg = MessageS::make<int>(pool, 42);
 
   EXPECT_FALSE(msg.empty());
   EXPECT_NE(msg.type_id(), nullptr);
-  EXPECT_EQ(msg.type_id(), Anorency::types::type_id<int>());
+  EXPECT_EQ(msg.type_id(), Anon::types::type_id<int>());
 
   auto v = msg.view();
   EXPECT_NE(v.type, nullptr);
@@ -151,7 +148,7 @@ TEST(Messages, PoolBasedMessageConceptCheck) {
 }
 
 TEST(Messages, PoolBasedMessageCreation) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   auto msg = MessageS::make<int>(pool, 42);
   ASSERT_NE(msg.try_get<int>(), nullptr);
@@ -159,7 +156,7 @@ TEST(Messages, PoolBasedMessageCreation) {
 }
 
 TEST(Messages, PoolBasedMessageTypeCheck) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   auto msg = MessageS::make<int>(pool, 42);
   EXPECT_EQ(msg.try_get<float>(), nullptr);
@@ -168,7 +165,7 @@ TEST(Messages, PoolBasedMessageTypeCheck) {
 }
 
 TEST(Messages, PoolBasedMessageDestruction) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
   int destruction_count = 0;
 
   struct Trackable {
@@ -193,7 +190,7 @@ TEST(Messages, PoolBasedMessageDestruction) {
 }
 
 TEST(Messages, PoolBasedMessageMove) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   auto msg1 = MessageS::make<int>(pool, 100);
   ASSERT_NE(msg1.try_get<int>(), nullptr);
@@ -207,7 +204,7 @@ TEST(Messages, PoolBasedMessageMove) {
 }
 
 TEST(Messages, PoolBasedMessageMoveAssignment) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   auto msg1 = MessageS::make<int>(pool, 100);
   auto msg2 = MessageS::make<int>(pool, 200);
@@ -220,7 +217,7 @@ TEST(Messages, PoolBasedMessageMoveAssignment) {
 }
 
 TEST(Messages, PoolBasedLargePayload) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   struct LargePayload {
     std::array<char, 256> data;
@@ -237,7 +234,7 @@ TEST(Messages, PoolBasedLargePayload) {
 }
 
 TEST(Messages, PoolBasedMessageConsistency) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
   constexpr int N = 1024;
 
   std::vector<MessageS> v;
@@ -252,81 +249,4 @@ TEST(Messages, PoolBasedMessageConsistency) {
     ASSERT_NE(msg, nullptr);
     EXPECT_EQ(*msg, i * i);
   }
-}
-
-// ============================================================================
-// OS Utilities Tests
-// ============================================================================
-
-TEST(OsUtil, PlatformDetectionMacrosExist) {
-  // Verify exactly one architecture is defined
-  int arch_count = 0;
-#ifdef ANORENCY_ARCH_X86_64
-  ++arch_count;
-#endif
-#ifdef ANORENCY_ARCH_ARM64
-  ++arch_count;
-#endif
-  EXPECT_EQ(arch_count, 1) << "Exactly one architecture macro should be defined";
-
-  // Verify exactly one OS is defined
-  int os_count = 0;
-#ifdef ANORENCY_OS_LINUX
-  ++os_count;
-#endif
-#ifdef ANORENCY_OS_MACOS
-  ++os_count;
-#endif
-  EXPECT_EQ(os_count, 1) << "Exactly one OS macro should be defined";
-}
-
-TEST(OsUtil, CpuRelaxDoesNotCrash) {
-  // Simply call cpu_relax() multiple times to ensure it doesn't crash
-  for (int i = 0; i < 1000; ++i) {
-    Anorency::cpu_relax();
-  }
-}
-
-TEST(OsUtil, CpuRelaxInSpinLoop) {
-  // Test cpu_relax() in a realistic spin-loop scenario
-  std::atomic<bool> flag{false};
-  int iterations = 0;
-
-  std::jthread setter([&]() {
-    std::this_thread::sleep_for(std::chrono::microseconds(100));
-    flag.store(true, std::memory_order_release);
-  });
-
-  while (!flag.load(std::memory_order_acquire)) {
-    Anorency::cpu_relax();
-    ++iterations;
-  }
-
-  EXPECT_GT(iterations, 0) << "Should have spun at least once";
-}
-
-TEST(OsUtil, SetThreadAffinityDoesNotCrash) {
-  // Test that set_thread_affinity doesn't crash for valid core indices
-  // Note: On macOS this sets affinity tags (hints), on Linux it pins to cores
-  Anorency::set_thread_affinity(0);
-}
-
-TEST(OsUtil, SetThreadAffinityMultipleCores) {
-  // Test setting affinity to different cores in sequence
-  for (int core = 0; core < 4; ++core) {
-    Anorency::set_thread_affinity(core);
-  }
-}
-
-TEST(OsUtil, SetThreadAffinityInThread) {
-  // Test thread affinity from within a spawned thread
-  std::atomic<bool> affinity_set{false};
-
-  std::jthread worker([&]() {
-    Anorency::set_thread_affinity(0);
-    affinity_set.store(true, std::memory_order_release);
-  });
-
-  worker.join();
-  EXPECT_TRUE(affinity_set.load());
 }

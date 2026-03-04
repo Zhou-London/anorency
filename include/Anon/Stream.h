@@ -2,12 +2,12 @@
 #include <atomic>
 #include <concepts>
 #include <cstddef>
-#define DEFAULT_STREAM_CAPACITY 2048
+#define DEFAULT_STREAM_CAPACITY 1024
 
 #include <array>
 #include <cstdint>
 
-namespace Anorency {
+namespace Anon {
 template <typename T, size_t Capacity = DEFAULT_STREAM_CAPACITY>
 class Stream {
  public:
@@ -29,5 +29,5 @@ class Stream {
   // alignas(64)
   std::array<T, Capacity> buffer_;
 };
-}  // namespace Anorency
-#include "Stream.inl"
+}  // namespace Anon
+#include "Anon/Stream.inl"

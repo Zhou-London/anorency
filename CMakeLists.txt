@@ -1,30 +1,23 @@
 cmake_minimum_required(VERSION 3.31)
 
-project(anorency)
+project(anon)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-add_library(anorency
+add_library(anon
     src/All.cpp
-
-    src/info/version.cpp
-
-    src/util/os_util.cpp
+    src/version.cpp
 )
 
-target_include_directories(anorency PUBLIC
-    include/Types
-    include/info
-    include/Streams
-    include/Messages
-    include/util
-    include/Pools
-    include/interfaces
+target_include_directories(anon PUBLIC
+    include
 )
 
-target_link_libraries(anorency PUBLIC
-    pthread
+find_package(Threads REQUIRED)
+
+target_link_libraries(anon PUBLIC
+    Threads::Threads
 )
 
 enable_testing()

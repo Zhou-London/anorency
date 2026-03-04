@@ -4,7 +4,14 @@
 #include <cstddef>
 #include <cstdlib>
 
-namespace Anorency {
+namespace Anon {
+
+template <typename T>
+concept mem_pool_wrapper =
+    requires(T s, std::size_t size, std::size_t align, void* ptr) {
+      { s.allocate(size, align) } noexcept -> std::same_as<void*>;
+      { s.deallocate(ptr) } noexcept -> std::same_as<void>;
+    };
 
 class MemPool {
  public:
@@ -165,4 +172,4 @@ inline void MemPool::deallocate(void* ptr) noexcept {
   }
 }
 
-}  // namespace Anorency
+}  // namespace Anon

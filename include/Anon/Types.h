@@ -1,8 +1,8 @@
 #pragma once
 
-#include "alias.h"
+#include "Anon/Alias.h"
 
-namespace Anorency {
+namespace Anon {
 namespace types {
 
 template <class T>
@@ -12,4 +12,4 @@ type_id_t type_id() noexcept {
 }
 }  // namespace types
 
-}  // namespace Anorency
+}  // namespace Anon

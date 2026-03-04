@@ -14,9 +14,11 @@ add_executable(ano_benchmarks
     benchmarks.cpp
 )
 
+find_package(Threads REQUIRED)
+
 target_link_libraries(ano_benchmarks
     PRIVATE
-    anorency
+    anon
     benchmark::benchmark
-    pthread
+    Threads::Threads
 )

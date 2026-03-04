@@ -1,24 +1,15 @@
-# Anorency
+# Anon
 
-An Actor-based Concurrency library for C++, insipred by SObjectizer.
+An all-in-one async library for C++.
 
-## Feature
+## What I got
+- Actor model for async.
+- A memory pool.
+- A FIFO array.
+- A generic type wrapper.
 
-- Heavy use of C++20 templates (if you count it as a feature!)
-- Lock-free Ring Buffer.
-- Envelope-based message with SBO.
-- Low-latency dispatch.
-- Profiling on nanoseconds.
-- No external library!
+## Why d'ya call it like that
+- I don't know I just thought of this word.
 
-## Preview
-
-N/A
-
-## Contribution
-
-N/A
-
-## License
-
-N/A
+## Get started
+- Include it.
