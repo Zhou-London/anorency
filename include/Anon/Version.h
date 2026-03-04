@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
 
-namespace Anorency {
+namespace Anon {
 std::string version();
 }

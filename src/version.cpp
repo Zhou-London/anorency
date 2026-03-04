@@ -1,7 +1,7 @@
-#include "Anorency/Version.h"
+#include "Anon/Version.h"
 
 #include <string>
 
-namespace Anorency {
+namespace Anon {
 std::string version() { return "v0.1"; }
-}  // namespace Anorency
+}  // namespace Anon

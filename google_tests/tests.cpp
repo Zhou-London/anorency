@@ -7,15 +7,13 @@
 #include <thread>
 #include <vector>
 
-#include "Anorency/Interfaces/MemPoolWrapper.h"
-#include "Anorency/Messages/Message.h"
-#include "Anorency/Messages/MessageWrappers.h"
-#include "Anorency/Pools/MemPool.h"
-#include "Anorency/Streams/Stream.h"
-#include "Anorency/Types/Types.h"
-#include "Anorency/Version.h"
+#include "Anon/Message.h"
+#include "Anon/MemPool.h"
+#include "Anon/Stream.h"
+#include "Anon/Types.h"
+#include "Anon/Version.h"
 
-using namespace Anorency;
+using namespace Anon;
 
 TEST(Info, info) { EXPECT_EQ(version(), "v0.1"); }
 
@@ -104,7 +102,7 @@ TEST(Messages, MessageTypesTest) {
 }
 
 TEST(MemPool, BasicAllocation) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   void* ptr = pool.allocate(64, 8);
   ASSERT_NE(ptr, nullptr);
@@ -114,7 +112,7 @@ TEST(MemPool, BasicAllocation) {
 }
 
 TEST(MemPool, AlignedAllocation) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   for (std::size_t align : {8, 16, 32, 64, 128}) {
     void* ptr = pool.allocate(100, align);
@@ -125,7 +123,7 @@ TEST(MemPool, AlignedAllocation) {
 }
 
 TEST(MemPool, ZeroSizeAllocation) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   void* ptr = pool.allocate(0, 8);
   EXPECT_EQ(ptr, nullptr);
@@ -133,16 +131,16 @@ TEST(MemPool, ZeroSizeAllocation) {
 
 TEST(Messages, PoolBasedMessageConceptCheck) {
   // Verify MemPool satisfies the concept
-  static_assert(Anorency::interfaces::mem_pool_wrapper<Anorency::MemPool>,
+  static_assert(Anon::mem_pool_wrapper<Anon::MemPool>,
                 "MemPool must satisfy mem_pool_wrapper concept");
 
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   auto msg = MessageS::make<int>(pool, 42);
 
   EXPECT_FALSE(msg.empty());
   EXPECT_NE(msg.type_id(), nullptr);
-  EXPECT_EQ(msg.type_id(), Anorency::types::type_id<int>());
+  EXPECT_EQ(msg.type_id(), Anon::types::type_id<int>());
 
   auto v = msg.view();
   EXPECT_NE(v.type, nullptr);
@@ -150,7 +148,7 @@ TEST(Messages, PoolBasedMessageConceptCheck) {
 }
 
 TEST(Messages, PoolBasedMessageCreation) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   auto msg = MessageS::make<int>(pool, 42);
   ASSERT_NE(msg.try_get<int>(), nullptr);
@@ -158,7 +156,7 @@ TEST(Messages, PoolBasedMessageCreation) {
 }
 
 TEST(Messages, PoolBasedMessageTypeCheck) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   auto msg = MessageS::make<int>(pool, 42);
   EXPECT_EQ(msg.try_get<float>(), nullptr);
@@ -167,7 +165,7 @@ TEST(Messages, PoolBasedMessageTypeCheck) {
 }
 
 TEST(Messages, PoolBasedMessageDestruction) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
   int destruction_count = 0;
 
   struct Trackable {
@@ -192,7 +190,7 @@ TEST(Messages, PoolBasedMessageDestruction) {
 }
 
 TEST(Messages, PoolBasedMessageMove) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   auto msg1 = MessageS::make<int>(pool, 100);
   ASSERT_NE(msg1.try_get<int>(), nullptr);
@@ -206,7 +204,7 @@ TEST(Messages, PoolBasedMessageMove) {
 }
 
 TEST(Messages, PoolBasedMessageMoveAssignment) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   auto msg1 = MessageS::make<int>(pool, 100);
   auto msg2 = MessageS::make<int>(pool, 200);
@@ -219,7 +217,7 @@ TEST(Messages, PoolBasedMessageMoveAssignment) {
 }
 
 TEST(Messages, PoolBasedLargePayload) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
 
   struct LargePayload {
     std::array<char, 256> data;
@@ -236,7 +234,7 @@ TEST(Messages, PoolBasedLargePayload) {
 }
 
 TEST(Messages, PoolBasedMessageConsistency) {
-  Anorency::MemPool pool;
+  Anon::MemPool pool;
   constexpr int N = 1024;
 
   std::vector<MessageS> v;

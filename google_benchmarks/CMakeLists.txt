@@ -18,7 +18,7 @@ find_package(Threads REQUIRED)
 
 target_link_libraries(ano_benchmarks
     PRIVATE
-    anorency
+    anon
     benchmark::benchmark
     Threads::Threads
 )

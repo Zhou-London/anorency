@@ -13,7 +13,7 @@ add_executable(ano_tests
 
 target_link_libraries(ano_tests
     PRIVATE
-    anorency
+    anon
     GTest::gtest_main
 )
 

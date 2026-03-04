@@ -1,14 +1,14 @@
 #include <benchmark/benchmark.h>
 
 #include <thread>
-#include "Anorency/Streams/Stream.h"
+#include "Anon/Stream.h"
 
-using namespace Anorency;
+using namespace Anon;
 
 static void BM_Stream_FIFO(benchmark::State& state) {
   constexpr int N = 1 << 20;
   Stream<int> stream;
-  
+
   for (auto _ : state) {
     int r = 0;
 

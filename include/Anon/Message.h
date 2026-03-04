@@ -3,12 +3,10 @@
 #include <cstddef>
 #include <type_traits>
 
-#include "Anorency/Types/Alias.h"
-#include "Anorency/Interfaces/MemPoolWrapper.h"
+#include "Anon/Alias.h"
+#include "MemPool.h"
 
-#define DEFAULT_MSG_SIZE 64
-
-namespace Anorency {
+namespace Anon {
 
 struct MessageView {
   type_id_t type;
@@ -57,8 +55,7 @@ class Message {
   static Message make(Args&&... args);
 
   template <class T, class Pool, class... Args>
-    requires std::is_nothrow_move_constructible_v<T> &&
-             interfaces::mem_pool_wrapper<Pool>
+    requires std::is_nothrow_move_constructible_v<T> && mem_pool_wrapper<Pool>
   static Message make(Pool& pool, Args&&... args);
 
  private:
@@ -78,6 +75,9 @@ class Message {
   static const MsgOps& ops_for() noexcept;
 };
 
-}  // namespace Anorency
+using MessageS = Message<64>;
+using MessageM = Message<128>;
+using MessageL = Message<256>;
+}  // namespace Anon
 
-#include "Anorency/Messages/Message.inl"
+#include "Anon/Message.inl"
