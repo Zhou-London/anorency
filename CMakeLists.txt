@@ -7,18 +7,14 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 add_library(anorency
     src/All.cpp
-
-    src/info/version.cpp
-
-    src/util/os_util.cpp
+    src/version.cpp
 )
 
 target_include_directories(anorency PUBLIC
+    include
     include/Types
-    include/info
     include/Streams
     include/Messages
-    include/util
     include/Pools
     include/interfaces
 )

@@ -2,7 +2,7 @@
 #include <atomic>
 #include <concepts>
 #include <cstddef>
-#define DEFAULT_STREAM_CAPACITY 2048
+#define DEFAULT_STREAM_CAPACITY 1024
 
 #include <array>
 #include <cstdint>
