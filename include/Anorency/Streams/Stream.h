@@ -30,4 +30,4 @@ class Stream {
   std::array<T, Capacity> buffer_;
 };
 }  // namespace Anorency
-#include "Stream.inl"
+#include "Anorency/Streams/Stream.inl"

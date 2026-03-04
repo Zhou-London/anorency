@@ -3,8 +3,8 @@
 #include <cstddef>
 #include <type_traits>
 
-#include "alias.h"
-#include "mem_pool_wrapper.h"
+#include "Anorency/Types/Alias.h"
+#include "Anorency/Interfaces/MemPoolWrapper.h"
 
 #define DEFAULT_MSG_SIZE 64
 
@@ -80,4 +80,4 @@ class Message {
 
 }  // namespace Anorency
 
-#include "Message.inl"
+#include "Anorency/Messages/Message.inl"

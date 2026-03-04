@@ -1,7 +1,7 @@
 #include <benchmark/benchmark.h>
 
 #include <thread>
-#include "Stream.h"
+#include "Anorency/Streams/Stream.h"
 
 using namespace Anorency;
 

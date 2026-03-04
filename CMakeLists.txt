@@ -12,15 +12,12 @@ add_library(anorency
 
 target_include_directories(anorency PUBLIC
     include
-    include/Types
-    include/Streams
-    include/Messages
-    include/Pools
-    include/interfaces
 )
 
+find_package(Threads REQUIRED)
+
 target_link_libraries(anorency PUBLIC
-    pthread
+    Threads::Threads
 )
 
 enable_testing()

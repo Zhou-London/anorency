@@ -3,7 +3,7 @@
 #include <atomic>
 #include <cstddef>
 
-#include "Stream.h"
+#include "Anorency/Streams/Stream.h"
 
 namespace Anorency {
 template <typename T, size_t Capacity>

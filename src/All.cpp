@@ -1,10 +1,10 @@
-#include "MemPool.h"
-#include "Message.h"
-#include "MessageWrappers.h"
-#include "Stream.h"
-#include "alias.h"
-#include "mem_pool_wrapper.h"
-#include "types.h"
-#include "version.h"
+#include "Anorency/Interfaces/MemPoolWrapper.h"
+#include "Anorency/Messages/Message.h"
+#include "Anorency/Messages/MessageWrappers.h"
+#include "Anorency/Pools/MemPool.h"
+#include "Anorency/Streams/Stream.h"
+#include "Anorency/Types/Alias.h"
+#include "Anorency/Types/Types.h"
+#include "Anorency/Version.h"
 
 /* Dummy cpp file for at least one TU */

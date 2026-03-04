@@ -6,9 +6,9 @@
 #include <type_traits>
 #include <utility>
 
-#include "Message.h"
-#include "mem_pool_wrapper.h"
-#include "types.h"
+#include "Anorency/Messages/Message.h"
+#include "Anorency/Interfaces/MemPoolWrapper.h"
+#include "Anorency/Types/Types.h"
 
 namespace Anorency {
 

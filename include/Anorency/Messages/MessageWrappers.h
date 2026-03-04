@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Message.h"
+#include "Anorency/Messages/Message.h"
 
 namespace Anorency {
 using MessageS = Message<32>;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "alias.h"
+#include "Anorency/Types/Alias.h"
 
 namespace Anorency {
 namespace types {
