@@ -24,10 +24,11 @@ Address Stage<D>::introduce(SetupFn&& setup, InitFn&& init) {
       // Terminate func
       [this, index]() {
         auto& slot = slots_[index];
-        if (slot.alive.load()) {
-          slot.alive.store(false);
-          slot.generation.fetch_add(1);
-          slot.actor->pending_terminate.store(true);
+        if (slot.alive.load(std::memory_order_acquire)) {
+          slot.alive.store(false, std::memory_order_release);
+          slot.generation.fetch_add(1, std::memory_order_release);
+          slot.actor->pending_terminate.store(
+              true, std::memory_order_release);
         }
       }));
 
@@ -61,10 +62,13 @@ template <typename D>
 void Stage<D>::retire(Address addr) {
   if (addr.index >= slots_.size()) return;
   auto& slot = slots_[addr.index];
-  if (slot.generation.load() != addr.generation) return;
-  slot.alive.store(false);
-  slot.generation.fetch_add(1);
-  slot.actor->pending_terminate.store(true);
+  if (slot.generation.load(std::memory_order_acquire) !=
+      addr.generation)
+    return;
+  slot.alive.store(false, std::memory_order_release);
+  slot.generation.fetch_add(1, std::memory_order_release);
+  slot.actor->pending_terminate.store(true,
+                                      std::memory_order_release);
 }
 
 template <typename D>
@@ -76,8 +80,9 @@ template <typename D>
 bool Stage<D>::deliver(Address target, MessageS&& msg) {
   if (target.index >= slots_.size()) return false;
   auto& slot = slots_[target.index];
-  if (!slot.alive.load() ||
-      slot.generation.load() != target.generation)
+  if (!slot.alive.load(std::memory_order_acquire) ||
+      slot.generation.load(std::memory_order_acquire) !=
+          target.generation)
     return false;
   return slot.actor->inbox.try_write(std::move(msg));
 }
