@@ -3,6 +3,8 @@
 #include <algorithm>
 #include <atomic>
 #include <concepts>
+#include <condition_variable>
+#include <mutex>
 #include <thread>
 #include <vector>
 
@@ -28,6 +30,8 @@ class SingleThreadDispatcher {
  private:
   std::vector<detail::Actor*> actors_;
   std::atomic<bool> stopped_{false};
+  std::mutex mtx_;
+  std::condition_variable cv_;
 };
 
 }  // namespace Anon

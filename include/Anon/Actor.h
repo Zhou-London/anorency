@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <functional>
 #include <unordered_map>
 
@@ -16,7 +17,7 @@ class Actor {
 
   Stream<MessageS> inbox;
   std::unordered_map<type_id_t, HandlerFn> handlers;
-  bool pending_terminate = false;
+  std::atomic<bool> pending_terminate{false};
 
   // Process one message from inbox. Returns true if processed.
   bool process_one();

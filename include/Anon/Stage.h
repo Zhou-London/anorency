@@ -1,7 +1,9 @@
 #pragma once
 
+#include <atomic>
 #include <functional>
 #include <memory>
+#include <thread>
 #include <vector>
 
 #include "Anon/Actor.h"
@@ -25,14 +27,28 @@ class Stage {
   void run();
   void stop();
 
+  // Take an actor offline by its address.
+  void retire(Address addr);
+
+  // Launch the stage on a dedicated thread.
+  // Returns std::jthread; call stop() to terminate.
+  static std::jthread launch(Stage& stage);
+
  private:
   struct ActorSlot {
     std::unique_ptr<detail::Actor> actor;
     std::unique_ptr<Interface> iface;
 
-    // Used to check expired
-    uint32_t generation = 0;
-    bool alive = false;
+    // Used to check expired (atomic for cross-thread retire)
+    std::atomic<uint32_t> generation{0};
+    std::atomic<bool> alive{false};
+
+    ActorSlot() = default;
+    ActorSlot(ActorSlot&& o) noexcept
+        : actor(std::move(o.actor)),
+          iface(std::move(o.iface)),
+          generation(o.generation.load()),
+          alive(o.alive.load()) {}
   };
 
   // Init function

@@ -344,6 +344,89 @@ TEST(ActorSystem, TwoActorPingPong) {
   EXPECT_EQ(pong_count.load(), 2);
 }
 
+TEST(ActorSystem, LaunchRunsOnThread) {
+  Stage<SingleThreadDispatcher> stage;
+  std::atomic<int> received{0};
+
+  Address recv = stage.introduce(
+      [&](Interface& iface) {
+        iface.subscribe<int>(
+            [&](int& val) { received.store(val); });
+      },
+      [](Interface&) {});
+
+  stage.introduce(
+      [](Interface&) {},
+      [&](Interface& iface) {
+        iface.publish<int>(recv, 77);
+      });
+
+  auto thread = Stage<SingleThreadDispatcher>::launch(stage);
+
+  while (received.load() == 0)
+    std::this_thread::yield();
+
+  stage.stop();
+  EXPECT_EQ(received.load(), 77);
+}
+
+TEST(ActorSystem, RetireActorByAddress) {
+  Stage<SingleThreadDispatcher> stage;
+  std::atomic<bool> publish_failed{false};
+
+  Address target = stage.introduce(
+      [](Interface& iface) {
+        iface.subscribe<int>([](int&) {});
+      },
+      [](Interface&) {});
+
+  stage.introduce(
+      [](Interface&) {},
+      [&](Interface& iface) {
+        // Retire target from outside, then try to publish
+        stage.retire(target);
+        // Give dispatcher a moment to remove the actor
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+        if (!iface.publish<int>(target, 99))
+          publish_failed.store(true);
+      });
+
+  auto thread = Stage<SingleThreadDispatcher>::launch(stage);
+
+  while (!publish_failed.load())
+    std::this_thread::yield();
+
+  stage.stop();
+  EXPECT_TRUE(publish_failed.load());
+}
+
+TEST(ActorSystem, StandbyWhenNoActors) {
+  Stage<SingleThreadDispatcher> stage;
+  std::atomic<bool> init_ran{false};
+
+  // Single actor that terminates itself immediately
+  stage.introduce(
+      [](Interface&) {},
+      [&](Interface& iface) {
+        init_ran.store(true);
+        iface.terminate();
+      });
+
+  auto thread = Stage<SingleThreadDispatcher>::launch(stage);
+
+  while (!init_ran.load())
+    std::this_thread::yield();
+
+  // Stage should be in standby now (no actors).
+  // stop() should wake it and end the thread.
+  std::this_thread::sleep_for(std::chrono::milliseconds(20));
+  stage.stop();
+
+  // jthread joins automatically; if standby didn't work,
+  // the thread would be busy-spinning instead of sleeping.
+  EXPECT_TRUE(init_ran.load());
+}
+
 TEST(ActorSystem, StaleAddressDetected) {
   Stage<SingleThreadDispatcher> stage;
   std::atomic<bool> publish_failed{false};
