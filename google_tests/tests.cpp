@@ -1,6 +1,7 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <atomic>
 #include <cstdint>
 #include <ranges>
 #include <string>
@@ -9,6 +10,7 @@
 
 #include "Anon/Message.h"
 #include "Anon/MemPool.h"
+#include "Anon/Stage.h"
 #include "Anon/Stream.h"
 #include "Anon/Types.h"
 #include "Anon/Version.h"
@@ -249,4 +251,120 @@ TEST(Messages, PoolBasedMessageConsistency) {
     ASSERT_NE(msg, nullptr);
     EXPECT_EQ(*msg, i * i);
   }
+}
+
+// === Actor System Tests ===
+
+using namespace Anon;
+
+TEST(ActorSystem, ConceptCheck) {
+  static_assert(dispatcher<SingleThreadDispatcher>,
+                "SingleThreadDispatcher must satisfy dispatcher concept");
+}
+
+TEST(ActorSystem, IntroduceReturnsAddress) {
+  Stage<SingleThreadDispatcher> stage;
+
+  Address a0 = stage.introduce(
+      [](Interface&) {}, [](Interface&) {});
+  Address a1 = stage.introduce(
+      [](Interface&) {}, [](Interface&) {});
+
+  EXPECT_EQ(a0.index, 0);
+  EXPECT_EQ(a0.generation, 1);
+  EXPECT_EQ(a1.index, 1);
+  EXPECT_EQ(a1.generation, 1);
+}
+
+TEST(ActorSystem, MessageDelivery) {
+  Stage<SingleThreadDispatcher> stage;
+  std::atomic<int> received{0};
+
+  Address recv = stage.introduce(
+      [&](Interface& iface) {
+        iface.subscribe<int>(
+            [&](int& val) { received.store(val); });
+      },
+      [](Interface&) {});
+
+  stage.introduce(
+      [](Interface&) {},
+      [&](Interface& iface) {
+        iface.publish<int>(recv, 42);
+      });
+
+  std::jthread runner([&]() { stage.run(); });
+
+  while (received.load() == 0)
+    std::this_thread::yield();
+
+  stage.stop();
+  EXPECT_EQ(received.load(), 42);
+}
+
+TEST(ActorSystem, TwoActorPingPong) {
+  Stage<SingleThreadDispatcher> stage;
+  std::atomic<int> pong_count{0};
+
+  struct Ping {
+    int val;
+  };
+  struct Pong {
+    int val;
+  };
+
+  Address a_addr, b_addr;
+
+  // Actor A: sends Ping, receives Pong
+  a_addr = stage.introduce(
+      [&](Interface& iface) {
+        iface.subscribe<Pong>(
+            [&](Pong& msg) { pong_count.store(msg.val); });
+      },
+      [&](Interface& iface) {
+        iface.publish<Ping>(b_addr, Ping{1});
+      });
+
+  // Actor B: receives Ping, replies with Pong
+  b_addr = stage.introduce(
+      [&](Interface& iface) {
+        iface.subscribe<Ping>(
+            [&](Ping& msg) {
+              iface.publish<Pong>(a_addr, Pong{msg.val + 1});
+            });
+      },
+      [](Interface&) {});
+
+  std::jthread runner([&]() { stage.run(); });
+
+  while (pong_count.load() == 0)
+    std::this_thread::yield();
+
+  stage.stop();
+  EXPECT_EQ(pong_count.load(), 2);
+}
+
+TEST(ActorSystem, StaleAddressDetected) {
+  Stage<SingleThreadDispatcher> stage;
+  std::atomic<bool> publish_failed{false};
+
+  Address target = stage.introduce(
+      [](Interface&) {},
+      [](Interface& iface) { iface.terminate(); });
+
+  stage.introduce(
+      [](Interface&) {},
+      [&](Interface& iface) {
+        // target will have terminated by now; publish should fail
+        if (!iface.publish<int>(target, 99))
+          publish_failed.store(true);
+      });
+
+  std::jthread runner([&]() { stage.run(); });
+
+  while (!publish_failed.load())
+    std::this_thread::yield();
+
+  stage.stop();
+  EXPECT_TRUE(publish_failed.load());
 }
