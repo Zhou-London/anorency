@@ -11,6 +11,10 @@ namespace Anon {
 
 class Interface {
  public:
+  Interface();
+  ~Interface() = default;
+
+  // * T = Message Type, F = Handler function
   template <class T, class F>
   void subscribe(F&& handler);
 
@@ -27,8 +31,7 @@ class Interface {
   std::function<bool(Address, MessageS&&)> publish_fn_;
   std::function<void()> terminate_fn_;
 
-  Interface(detail::Actor* actor,
-            std::function<bool(Address, MessageS&&)> pub,
+  Interface(detail::Actor* actor, std::function<bool(Address, MessageS&&)> pub,
             std::function<void()> term);
 };
 

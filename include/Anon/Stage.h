@@ -29,10 +29,13 @@ class Stage {
   struct ActorSlot {
     std::unique_ptr<detail::Actor> actor;
     std::unique_ptr<Interface> iface;
+
+    // Used to check expired
     uint32_t generation = 0;
     bool alive = false;
   };
 
+  // Init function
   struct PendingInit {
     uint32_t index;
     std::function<void(Interface&)> fn;
@@ -42,6 +45,7 @@ class Stage {
   std::vector<PendingInit> pending_inits_;
   D dispatcher_;
 
+  // Deliver the published message
   bool deliver(Address target, MessageS&& msg);
 };
 

@@ -2,7 +2,7 @@
 #include <atomic>
 #include <concepts>
 #include <cstddef>
-#define DEFAULT_STREAM_CAPACITY 1024
+#define DEFAULT_STREAM_CAPACITY 256
 
 #include <array>
 #include <cstdint>
@@ -26,7 +26,6 @@ class Stream {
   alignas(64) std::atomic<uint32_t> head_;
   alignas(64) std::atomic<uint32_t> tail_;
 
-  // alignas(64)
   std::array<T, Capacity> buffer_;
 };
 }  // namespace Anon

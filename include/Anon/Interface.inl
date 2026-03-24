@@ -17,6 +17,8 @@ inline void Interface::terminate() { terminate_fn_(); }
 template <class T, class F>
 void Interface::subscribe(F&& handler) {
   auto type = types::type_id<T>();
+
+  // Bind the handler function to the type (message).
   actor_->handlers[type] =
       [h = std::forward<F>(handler)](void* data) mutable {
         h(*static_cast<T*>(data));

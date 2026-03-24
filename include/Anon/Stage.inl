@@ -7,18 +7,21 @@ namespace Anon {
 template <typename D>
 template <class SetupFn, class InitFn>
 Address Stage<D>::introduce(SetupFn&& setup, InitFn&& init) {
-  uint32_t index = static_cast<uint32_t>(slots_.size());
+  auto index = static_cast<uint32_t>(slots_.size());
 
+  // Append an Actor Slot
   auto& slot = slots_.emplace_back();
   slot.actor = std::make_unique<detail::Actor>();
   slot.generation = 1;
   slot.alive = true;
-
   slot.iface.reset(new Interface(
       slot.actor.get(),
+
+      // Publish func
       [this](Address target, MessageS&& msg) {
         return deliver(target, std::move(msg));
       },
+      // Terminate func
       [this, index]() {
         auto& slot = slots_[index];
         if (slot.alive) {
@@ -28,13 +31,12 @@ Address Stage<D>::introduce(SetupFn&& setup, InitFn&& init) {
         }
       }));
 
+  // Call setup func & Append init func
   setup(*slot.iface);
-
   pending_inits_.push_back(
       {index, std::forward<InitFn>(init)});
 
   dispatcher_.add_actor(slot.actor.get());
-
   return Address{index, slot.generation};
 }
 

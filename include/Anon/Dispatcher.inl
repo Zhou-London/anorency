@@ -15,11 +15,16 @@ inline void SingleThreadDispatcher::remove_actor(detail::Actor* actor) {
 inline void SingleThreadDispatcher::run() {
   while (!stopped_.load(std::memory_order_acquire)) {
     bool any_processed = false;
+
+    // Process actors
     for (auto* actor : actors_) {
       if (actor->process_one()) any_processed = true;
     }
+
+    // Erase actors that are pending termiante
     std::erase_if(actors_,
                   [](detail::Actor* a) { return a->pending_terminate; });
+                  
     if (!any_processed) std::this_thread::yield();
   }
 }

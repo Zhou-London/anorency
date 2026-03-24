@@ -13,6 +13,7 @@ concept mem_pool_wrapper =
       { s.deallocate(ptr) } noexcept -> std::same_as<void>;
     };
 
+// * A sample mem pool.
 class MemPool {
  public:
   static constexpr std::size_t DEFAULT_POOL_SIZE = 1024 * 1024;
