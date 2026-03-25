@@ -73,7 +73,7 @@ void Stage<D>::retire(Address addr) {
 
 template <typename D>
 std::jthread Stage<D>::launch(Stage& stage) {
-  return std::jthread([&stage]() { stage.run(); });
+  return std::jthread([&]() { stage.run(); });
 }
 
 template <typename D>
